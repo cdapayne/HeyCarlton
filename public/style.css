@@ -5,6 +5,9 @@ body {
   color: #f0f6fc;
   font-size: 16px;
 }
+h1, h2, h3, h4, h5, h6 {
+  font-size: 16px;
+}
 
 /* Landing page */
 #landing {
@@ -18,7 +21,7 @@ body {
   background: linear-gradient(135deg, #1e3c72, #2a5298);
 }
 #landing h1 {
-  font-size: 3rem;
+  font-size: 16px;
   margin-bottom: 2rem;
 }
 #login {
@@ -102,7 +105,7 @@ header .spacer { flex: 1; }
   flex: 1;
   padding: 1rem;
   overflow-y: auto;
-  font-size: 18px;
+  font-size: 16px;
 }
 .message {
   margin-bottom: 1rem;
@@ -110,20 +113,26 @@ header .spacer { flex: 1; }
   gap: 0.5rem;
 }
 .message.user {
-  color: #79c0ff;
-  justify-content: flex-end;
+  display: block;
 }
 .message.bot {
-  color: #ffa657;
   justify-content: flex-start;
   align-items: flex-start;
 }
 .bubble {
-  background: #161b22;
   padding: 0.5rem 0.75rem;
   border-radius: 8px;
   max-width: 80%;
   word-break: break-word;
+}
+.message.user .bubble {
+  background: #1e3a8a;
+  color: #fff;
+  margin-left: auto;
+}
+.message.bot .bubble {
+  background: #238636;
+  color: #fff;
 }
 .icon-bubble {
   background: #161b22;
@@ -150,7 +159,7 @@ header .spacer { flex: 1; }
   border: 1px solid #30363d;
   color: #f0f6fc;
   border-radius: 4px;
-  font-size: 18px;
+  font-size: 16px;
 }
 #prompt-form button {
   padding: 0.5rem 1rem;
@@ -165,11 +174,16 @@ header .spacer { flex: 1; }
 .marquee {
   overflow: hidden;
   white-space: nowrap;
+  font-size: 16px;
 }
 .marquee-content {
   display: inline-block;
   padding-left: 100%;
   animation: marquee 500s linear infinite;
+  font-size: 16px;
+}
+#rss-ticker {
+  font-size: 16px;
 }
 .marquee-content span {
   padding-right: 2rem;
