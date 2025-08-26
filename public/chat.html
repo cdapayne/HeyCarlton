@@ -36,7 +36,10 @@
         <input type="text" id="prompt-input" placeholder="Type your message" class="flex-1 p-2 bg-gray-800 text-white border border-gray-600 rounded">
         <button type="submit" class="p-2 bg-green-600 text-white rounded"><i class="fas fa-paper-plane"></i> Send</button>
       </form>
-      <div id="rss-marquee" class="marquee bg-gray-800 text-white p-2 text-sm"></div>
+      <div id="rss-ticker" class="flex items-center bg-gray-800 text-white text-sm">
+        <span class="ticker-label px-2 py-1 bg-gray-700">PayneBrain News Ticker</span>
+        <div id="rss-marquee" class="marquee p-2 flex-1"></div>
+      </div>
     </main>
   </div>
   <div id="settings-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 items-center justify-center">
