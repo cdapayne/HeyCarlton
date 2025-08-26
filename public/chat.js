@@ -1,11 +1,25 @@
 const projectList = document.getElementById('project-list');
 const newProjectBtn = document.getElementById('new-project-btn');
 const openCodexBtn = document.getElementById('open-codex');
+const studyModeBtn = document.getElementById('study-mode-btn');
 const promptForm = document.getElementById('prompt-form');
 const promptInput = document.getElementById('prompt-input');
 const fileInput = document.getElementById('file-input');
 const messagesDiv = document.getElementById('messages');
 const modelSelect = document.getElementById('model-select');
+const settingsBtn = document.getElementById('settings-btn');
+const settingsModal = document.getElementById('settings-modal');
+const settingsForm = document.getElementById('settings-form');
+const rssOptions = document.getElementById('rss-options');
+const rssMarquee = document.getElementById('rss-marquee');
+
+const allFeeds = {
+  cnn: { name: 'CNN', url: 'https://rss.cnn.com/rss/cnn_topstories.rss' },
+  abc: { name: 'ABC', url: 'https://feeds.abcnews.com/abcnews/topstories' },
+  sports: { name: 'Sports', url: 'https://www.espn.com/espn/rss/news' }
+};
+let selectedFeeds = JSON.parse(localStorage.getItem('rssFeeds') || '["cnn","abc","sports"]');
+const studyData = [];
 
 let remainingQueries = parseInt(localStorage.getItem('remainingQueries') || '0');
 const queryLimit = document.createElement('div');
@@ -17,6 +31,23 @@ let currentProject = null;
 
 openCodexBtn.addEventListener('click', () => {
   window.open('codex.html', 'codexWindow');
+});
+
+studyModeBtn.addEventListener('click', () => {
+  const action = prompt('Type "add" to add info or "quiz" to start quiz');
+  if (action === 'add') {
+    const question = prompt('Enter a question or term');
+    const answer = prompt('Enter the answer');
+    if (question && answer) studyData.push({ question, answer });
+  } else if (action === 'quiz') {
+    if (!studyData.length) {
+      alert('No study data yet');
+      return;
+    }
+    const item = studyData[Math.floor(Math.random() * studyData.length)];
+    const resp = prompt(item.question);
+    alert(resp === item.answer ? 'Correct!' : `Incorrect. ${item.answer}`);
+  }
 });
 
 newProjectBtn.addEventListener('click', async () => {
@@ -35,6 +66,21 @@ projectList.addEventListener('click', e => {
     currentProject = e.target.dataset.id;
     loadProjectHistory();
   }
+});
+
+settingsBtn.addEventListener('click', () => {
+  renderSettings();
+  settingsModal.classList.remove('hidden');
+  settingsModal.classList.add('flex');
+});
+
+settingsForm.addEventListener('submit', e => {
+  e.preventDefault();
+  selectedFeeds = Array.from(rssOptions.querySelectorAll('input:checked')).map(cb => cb.value);
+  localStorage.setItem('rssFeeds', JSON.stringify(selectedFeeds));
+  settingsModal.classList.add('hidden');
+  settingsModal.classList.remove('flex');
+  updateMarquee();
 });
 
 promptForm.addEventListener('submit', async e => {
@@ -128,7 +174,41 @@ async function loadProjectHistory() {
 }
 
 loadProjects();
+updateMarquee();
 
 function updateQueryDisplay() {
   queryLimit.textContent = `Queries left: ${remainingQueries}`;
+}
+
+function renderSettings() {
+  rssOptions.innerHTML = '';
+  Object.entries(allFeeds).forEach(([key, feed]) => {
+    const label = document.createElement('label');
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.value = key;
+    if (selectedFeeds.includes(key)) checkbox.checked = true;
+    label.appendChild(checkbox);
+    label.append(' ' + feed.name);
+    rssOptions.appendChild(label);
+  });
+}
+
+async function updateMarquee() {
+  const titles = [];
+  for (const key of selectedFeeds) {
+    const url = allFeeds[key].url;
+    try {
+      const res = await fetch(`/api/rss?url=${encodeURIComponent(url)}`);
+      const json = await res.json();
+      titles.push(...json.titles.slice(0, 5));
+    } catch (err) {
+      console.error(err);
+    }
+  }
+  const content = document.createElement('div');
+  content.className = 'marquee-content';
+  content.innerHTML = titles.map(t => `<span>${t}</span>`).join('');
+  rssMarquee.innerHTML = '';
+  rssMarquee.appendChild(content);
 }
