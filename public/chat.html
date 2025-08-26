@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <title>Carlton Chat</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css">
 </head>
-<body>
+<body class="bg-gray-900 text-white">
   <div id="app">
     <aside id="sidebar">
       <section class="projects">
@@ -17,19 +18,19 @@
       </section>
     </aside>
     <main id="chat">
-      <header>
-        <div class="spacer"></div>
-        <img src="carlton-logo.svg" id="logo" alt="Carlton logo">
-      </header>
-      <div id="messages"></div>
-      <form id="prompt-form">
-        <select id="model-select">
+      <header class="flex items-center p-2 bg-gray-900 border-b border-gray-700">
+        <img src="carlton-logo.svg" id="logo" alt="Carlton logo" class="w-10 h-10">
+        <div id="top-info" class="flex-1 text-sm text-gray-300"></div>
+        <select id="model-select" class="bg-gray-800 text-white border border-gray-600 rounded p-1">
           <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
           <option value="gpt-4">gpt-4</option>
         </select>
-        <input type="file" id="file-input" multiple>
-        <input type="text" id="prompt-input" placeholder="Type your message">
-        <button type="submit">Send</button>
+      </header>
+      <div id="messages" class="flex-1 p-4 overflow-y-auto"></div>
+      <form id="prompt-form" class="flex gap-2 p-2 bg-gray-900 border-t border-gray-700">
+        <input type="file" id="file-input" multiple class="text-sm text-gray-300">
+        <input type="text" id="prompt-input" placeholder="Type your message" class="flex-1 p-2 bg-gray-800 text-white border border-gray-600 rounded">
+        <button type="submit" class="p-2 bg-green-600 text-white rounded">Send</button>
       </form>
     </main>
   </div>

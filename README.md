@@ -19,6 +19,10 @@ Carlton is a simple web-based AI assistant that uses the OpenAI API. It features
 
 The app will be available at `http://localhost:3000`.
 
+## Admin Login
+
+The default admin password is `admin123`.
+
 ## Tests
 
 Run a basic test suite with:
