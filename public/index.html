@@ -17,10 +17,6 @@
         <ul id="project-list"></ul>
         <button id="new-project-btn">New Project</button>
       </section>
-      <section class="history">
-        <h2>History</h2>
-        <ul id="history-list"></ul>
-      </section>
     </aside>
     <main id="chat">
       <header>
@@ -38,6 +34,12 @@
         <input type="text" id="prompt-input" placeholder="Type your message">
         <button type="submit">Send</button>
       </form>
+      <section id="codex">
+        <h2>Codex</h2>
+        <textarea id="codex-input" placeholder="Enter code prompt"></textarea>
+        <button id="codex-submit">Run</button>
+        <pre id="codex-output"></pre>
+      </section>
     </main>
   </div>
   <script src="app.js"></script>
