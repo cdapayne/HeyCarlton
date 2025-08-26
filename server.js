@@ -1,0 +1,114 @@
+import express from 'express';
+import cors from 'cors';
+import fs from 'fs';
+import path from 'path';
+import multer from 'multer';
+import OpenAI from 'openai';
+import { slugify, generateTitle } from './utils.js';
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+app.use(express.static('public'));
+
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+const DATA_DIR = path.join(process.cwd(), 'data');
+const PROJECTS_DIR = path.join(DATA_DIR, 'projects');
+fs.mkdirSync(PROJECTS_DIR, { recursive: true });
+
+const storage = multer.diskStorage({
+  destination(req, file, cb) {
+    const projectPath = path.join(PROJECTS_DIR, req.params.projectId);
+    fs.mkdirSync(projectPath, { recursive: true });
+    cb(null, projectPath);
+  },
+  filename(req, file, cb) {
+    cb(null, Date.now() + '-' + file.originalname);
+  }
+});
+
+const upload = multer({ storage });
+
+// Create project
+app.post('/api/projects', (req, res) => {
+  const { name } = req.body;
+  if (!name) return res.status(400).json({ error: 'name required' });
+  const id = slugify(name);
+  const dir = path.join(PROJECTS_DIR, id);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, 'meta.json'), JSON.stringify({ id, name, created: new Date().toISOString() }, null, 2));
+  res.json({ id, name });
+});
+
+// List projects
+app.get('/api/projects', (req, res) => {
+  const projects = fs.readdirSync(PROJECTS_DIR)
+    .filter(f => fs.statSync(path.join(PROJECTS_DIR, f)).isDirectory())
+    .map(id => {
+      const metaPath = path.join(PROJECTS_DIR, id, 'meta.json');
+      const meta = fs.existsSync(metaPath) ? JSON.parse(fs.readFileSync(metaPath)) : { id, name: id };
+      return meta;
+    });
+  res.json(projects);
+});
+
+// List chats for a project
+app.get('/api/projects/:projectId/chats', (req, res) => {
+  const projectId = req.params.projectId;
+  const dir = path.join(PROJECTS_DIR, projectId);
+  if (!fs.existsSync(dir)) return res.json([]);
+  const chats = fs.readdirSync(dir)
+    .filter(f => f.endsWith('.json') && f !== 'meta.json')
+    .map(f => {
+      const chat = JSON.parse(fs.readFileSync(path.join(dir, f)));
+      return { id: f, title: chat.title, date: chat.date };
+    });
+  res.json(chats);
+});
+
+// Get chat content
+app.get('/api/projects/:projectId/chats/:chatId', (req, res) => {
+  const file = path.join(PROJECTS_DIR, req.params.projectId, req.params.chatId);
+  if (!fs.existsSync(file)) return res.status(404).end();
+  const chat = JSON.parse(fs.readFileSync(file));
+  res.json(chat);
+});
+
+// Send chat
+app.post('/api/projects/:projectId/chat', upload.array('files'), async (req, res) => {
+  const projectId = req.params.projectId;
+  const { prompt, model = 'gpt-3.5-turbo' } = req.body;
+  if (!prompt) return res.status(400).json({ error: 'prompt required' });
+
+  let responseText = '';
+  try {
+    if (model === 'code-davinci-002') {
+      const completion = await openai.completions.create({ model, prompt, max_tokens: 256 });
+      responseText = completion.choices[0].text.trim();
+    } else {
+      const completion = await openai.chat.completions.create({
+        model,
+        messages: [{ role: 'user', content: prompt }]
+      });
+      responseText = completion.choices[0].message.content.trim();
+    }
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+
+  const { title, file } = generateTitle(prompt);
+  const chatData = {
+    title,
+    date: new Date().toISOString(),
+    prompt,
+    response: responseText,
+    files: req.files ? req.files.map(f => ({ original: f.originalname, stored: f.filename })) : []
+  };
+  const chatPath = path.join(PROJECTS_DIR, projectId, file);
+  fs.writeFileSync(chatPath, JSON.stringify(chatData, null, 2));
+  res.json({ ...chatData, id: file });
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server listening on ${PORT}`));

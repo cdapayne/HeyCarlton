@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Carlton</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="start-screen">
+    <h1>Whatcha Wanna Talk About</h1>
+    <button id="start-btn">Start</button>
+  </div>
+  <div id="app" class="hidden">
+    <aside id="sidebar">
+      <section class="projects">
+        <h2>Projects</h2>
+        <ul id="project-list"></ul>
+        <button id="new-project-btn">New Project</button>
+      </section>
+      <section class="history">
+        <h2>History</h2>
+        <ul id="history-list"></ul>
+      </section>
+    </aside>
+    <main id="chat">
+      <header>
+        <div class="spacer"></div>
+        <img src="carlton-logo.svg" id="logo" alt="Carlton logo">
+      </header>
+      <div id="messages"></div>
+      <form id="prompt-form">
+        <select id="model-select">
+          <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+          <option value="gpt-4">gpt-4</option>
+          <option value="code-davinci-002">code-davinci-002</option>
+        </select>
+        <input type="file" id="file-input" multiple>
+        <input type="text" id="prompt-input" placeholder="Type your message">
+        <button type="submit">Send</button>
+      </form>
+    </main>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
