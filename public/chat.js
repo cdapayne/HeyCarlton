@@ -7,6 +7,12 @@ const fileInput = document.getElementById('file-input');
 const messagesDiv = document.getElementById('messages');
 const modelSelect = document.getElementById('model-select');
 
+let remainingQueries = parseInt(localStorage.getItem('remainingQueries') || '0');
+const queryLimit = document.createElement('div');
+queryLimit.id = 'query-limit';
+document.querySelector('header .spacer').appendChild(queryLimit);
+updateQueryDisplay();
+
 let currentProject = null;
 
 openCodexBtn.addEventListener('click', () => {
@@ -35,6 +41,10 @@ promptForm.addEventListener('submit', async e => {
   e.preventDefault();
   const prompt = promptInput.value;
   if (!prompt) return;
+  if (remainingQueries <= 0) {
+    alert('Query limit reached');
+    return;
+  }
   if (!currentProject) {
     const name = prompt.trim().substring(0, 20) || 'project';
     const resProj = await fetch('/api/projects', {
@@ -56,6 +66,9 @@ promptForm.addEventListener('submit', async e => {
   appendMessage('bot', json.response);
   promptInput.value = '';
   fileInput.value = '';
+  remainingQueries--;
+  localStorage.setItem('remainingQueries', remainingQueries);
+  updateQueryDisplay();
 });
 
 function appendMessage(role, text) {
@@ -101,3 +114,7 @@ async function loadProjectHistory() {
 }
 
 loadProjects();
+
+function updateQueryDisplay() {
+  queryLimit.textContent = `Queries left: ${remainingQueries}`;
+}

@@ -9,6 +9,12 @@
 <body>
   <section id="codex-page">
     <h2>Codex</h2>
+    <div id="github-connect">
+      <input type="text" id="repo-url" placeholder="owner/repo">
+      <input type="password" id="github-token" placeholder="GitHub token (optional)">
+      <button id="load-repo">Load Repo</button>
+      <select id="file-select"></select>
+    </div>
     <textarea id="codex-input" placeholder="Enter code prompt"></textarea>
     <button id="codex-submit">Run</button>
     <pre><code id="codex-output"></code></pre>
