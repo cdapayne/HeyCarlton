@@ -12,6 +12,8 @@ const settingsModal = document.getElementById('settings-modal');
 const settingsForm = document.getElementById('settings-form');
 const rssOptions = document.getElementById('rss-options');
 const rssMarquee = document.getElementById('rss-marquee');
+const zipInput = document.getElementById('zip-input');
+const weatherDiv = document.getElementById('weather');
 
 const allFeeds = {
   cnn: { name: 'CNN', url: 'https://rss.cnn.com/rss/cnn_topstories.rss' },
@@ -19,6 +21,7 @@ const allFeeds = {
   sports: { name: 'Sports', url: 'https://www.espn.com/espn/rss/news' }
 };
 let selectedFeeds = JSON.parse(localStorage.getItem('rssFeeds') || '["cnn","abc","sports"]');
+let userZip = localStorage.getItem('zip') || '';
 const studyData = [];
 
 let remainingQueries = parseInt(localStorage.getItem('remainingQueries') || '0');
@@ -78,9 +81,12 @@ settingsForm.addEventListener('submit', e => {
   e.preventDefault();
   selectedFeeds = Array.from(rssOptions.querySelectorAll('input:checked')).map(cb => cb.value);
   localStorage.setItem('rssFeeds', JSON.stringify(selectedFeeds));
+  userZip = zipInput.value.trim();
+  localStorage.setItem('zip', userZip);
   settingsModal.classList.add('hidden');
   settingsModal.classList.remove('flex');
   updateMarquee();
+  updateWeather();
 });
 
 promptForm.addEventListener('submit', async e => {
@@ -102,7 +108,7 @@ promptForm.addEventListener('submit', async e => {
     currentProject = proj.id;
     loadProjects();
   }
-  appendMessage('user', prompt);
+  appendMessage('user', prompt, Array.from(fileInput.files));
   const data = new FormData();
   data.append('prompt', prompt);
   data.append('model', modelSelect.value);
@@ -117,7 +123,7 @@ promptForm.addEventListener('submit', async e => {
   updateQueryDisplay();
 });
 
-function appendMessage(role, text) {
+function appendMessage(role, text, attachments = []) {
   const div = document.createElement('div');
   div.className = `message ${role}`;
   const bubble = document.createElement('div');
@@ -146,6 +152,34 @@ function appendMessage(role, text) {
     const p = document.createElement('p');
     p.textContent = after;
     bubble.appendChild(p);
+  }
+  if (attachments.length) {
+    const atDiv = document.createElement('div');
+    atDiv.className = 'attachments mt-2 flex flex-wrap gap-2';
+    attachments.forEach(file => {
+      if (file instanceof File) {
+        const url = URL.createObjectURL(file);
+        if (file.type.startsWith('image/')) {
+          const img = document.createElement('img');
+          img.src = url;
+          img.alt = file.name;
+          img.className = 'attachment-img';
+          atDiv.appendChild(img);
+        } else {
+          const link = document.createElement('a');
+          link.href = url;
+          link.textContent = file.name;
+          link.className = 'attachment-link underline';
+          link.target = '_blank';
+          atDiv.appendChild(link);
+        }
+      } else if (file && file.original) {
+        const span = document.createElement('span');
+        span.textContent = file.original;
+        atDiv.appendChild(span);
+      }
+    });
+    bubble.appendChild(atDiv);
   }
   if (role === 'bot') {
     const icon = document.createElement('div');
@@ -179,7 +213,7 @@ async function loadProjectHistory() {
   for (const c of chats) {
     const resChat = await fetch(`/api/projects/${currentProject}/chats/${c.id}`);
     const chat = await resChat.json();
-    appendMessage('user', chat.prompt);
+    appendMessage('user', chat.prompt, chat.files || []);
     appendMessage('bot', chat.response);
   }
 }
@@ -203,6 +237,7 @@ function renderSettings() {
     label.append(' ' + feed.name);
     rssOptions.appendChild(label);
   });
+  zipInput.value = userZip;
 }
 
 async function updateMarquee() {
@@ -223,3 +258,24 @@ async function updateMarquee() {
   rssMarquee.innerHTML = '';
   rssMarquee.appendChild(content);
 }
+
+async function updateWeather() {
+  if (!userZip) {
+    weatherDiv.textContent = '';
+    return;
+  }
+  try {
+    const res = await fetch(`https://wttr.in/${userZip}?format=j1`);
+    const data = await res.json();
+    const current = data.current_condition[0];
+    const humidity = parseInt(current.humidity);
+    const iconUrl = current.weatherIconUrl[0].value;
+    weatherDiv.style.color = humidity < 55 ? 'limegreen' : '';
+    weatherDiv.innerHTML = `<img src="${iconUrl}" alt="icon" class="w-6 h-6 mr-1">${current.temp_F}\u00B0F` + (humidity < 55 ? ' <span>Perfect Day</span>' : '');
+  } catch (e) {
+    console.error(e);
+    weatherDiv.textContent = '';
+  }
+}
+
+updateWeather();

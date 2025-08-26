@@ -86,16 +86,26 @@ app.post('/api/projects/:projectId/chat', upload.array('files'), async (req, res
 
   let responseText = '';
   try {
+    const sys = {
+      role: 'system',
+      content: 'You are Carlton, an AI assistant. Answer the user and end your response with an additional suggestion to take it to the next level.'
+    };
+    let userMessage;
+    if (req.files && req.files.length) {
+      const parts = [{ type: 'text', text: prompt }];
+      for (const f of req.files) {
+        if (f.mimetype && f.mimetype.startsWith('image/')) {
+          const b64 = fs.readFileSync(f.path, { encoding: 'base64' });
+          parts.push({ type: 'image', image_url: `data:${f.mimetype};base64,${b64}` });
+        }
+      }
+      userMessage = { role: 'user', content: parts };
+    } else {
+      userMessage = { role: 'user', content: prompt };
+    }
     const completion = await openai.chat.completions.create({
       model,
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You are Carlton, an AI assistant. Answer the user and end your response with an additional suggestion to take it to the next level.'
-        },
-        { role: 'user', content: prompt }
-      ]
+      messages: [sys, userMessage]
     });
     responseText = completion.choices[0].message.content.trim();
   } catch (err) {
