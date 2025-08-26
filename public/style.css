@@ -119,6 +119,7 @@ header .spacer { flex: 1; }
   border: 1px solid #30363d;
   color: #f0f6fc;
   border-radius: 4px;
+  font-size: 15px;
 }
 #prompt-form button {
   padding: 0.5rem 1rem;

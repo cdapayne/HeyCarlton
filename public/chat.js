@@ -10,7 +10,7 @@ const modelSelect = document.getElementById('model-select');
 let remainingQueries = parseInt(localStorage.getItem('remainingQueries') || '0');
 const queryLimit = document.createElement('div');
 queryLimit.id = 'query-limit';
-document.querySelector('header .spacer').appendChild(queryLimit);
+document.getElementById('top-info').appendChild(queryLimit);
 updateQueryDisplay();
 
 let currentProject = null;
@@ -74,16 +74,30 @@ promptForm.addEventListener('submit', async e => {
 function appendMessage(role, text) {
   const div = document.createElement('div');
   div.className = `message ${role}`;
-  if (/```/.test(text) || text.includes('\n')) {
-    const codeText = text.replace(/```/g, '');
+  const regex = /```([\s\S]*?)```/g;
+  let lastIndex = 0;
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    const before = text.slice(lastIndex, match.index).trim();
+    if (before) {
+      const p = document.createElement('p');
+      p.textContent = before;
+      div.appendChild(p);
+    }
+    const codeText = match[1];
     const pre = document.createElement('pre');
     const code = document.createElement('code');
-    code.textContent = codeText;
+    code.textContent = codeText.trim();
     pre.appendChild(code);
     div.appendChild(pre);
     hljs.highlightElement(code);
-  } else {
-    div.textContent = text;
+    lastIndex = regex.lastIndex;
+  }
+  const after = text.slice(lastIndex).trim();
+  if (after) {
+    const p = document.createElement('p');
+    p.textContent = after;
+    div.appendChild(p);
   }
   messagesDiv.appendChild(div);
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
