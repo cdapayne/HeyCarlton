@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import multer from 'multer';
 import OpenAI from 'openai';
+import 'dotenv/config';    
 import { slugify, generateTitle } from './utils.js';
 
 const app = express();

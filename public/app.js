@@ -1,4 +1,4 @@
-const startBtn = document.getElementById('start-btn');
+const startBtn = document.getElementById('startbtn');
 const startScreen = document.getElementById('start-screen');
 const app = document.getElementById('app');
 const projectList = document.getElementById('project-list');
