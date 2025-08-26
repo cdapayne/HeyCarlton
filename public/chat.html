@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>Carlton Chat</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css">
 </head>
@@ -11,14 +12,16 @@
   <div id="app">
     <aside id="sidebar">
       <section class="projects">
-        <h2>Projects</h2>
+        <h2><i class="fas fa-folder-open"></i> Projects</h2>
         <ul id="project-list"></ul>
-        <button id="new-project-btn">New Project</button>
-        <button id="open-codex">Open Codex</button>
+        <button id="new-project-btn"><i class="fas fa-folder-plus"></i> New Project</button>
+        <button id="open-codex"><i class="fas fa-book-open"></i> Open Codex</button>
+        <button id="study-mode-btn"><i class="fas fa-graduation-cap"></i> Study Mode</button>
       </section>
     </aside>
     <main id="chat">
       <header class="flex items-center p-2 bg-gray-900 border-b border-gray-700">
+        <button id="settings-btn" class="p-2 bg-gray-800 text-white rounded mr-2"><i class="fas fa-cog"></i></button>
         <img src="carlton-logo.svg" id="logo" alt="Carlton logo" class="w-10 h-10">
         <div id="top-info" class="flex-1 text-sm text-gray-300"></div>
         <select id="model-select" class="bg-gray-800 text-white border border-gray-600 rounded p-1">
@@ -28,11 +31,22 @@
       </header>
       <div id="messages" class="flex-1 p-4 overflow-y-auto"></div>
       <form id="prompt-form" class="flex gap-2 p-2 bg-gray-900 border-t border-gray-700">
-        <input type="file" id="file-input" multiple class="text-sm text-gray-300">
+        <label for="file-input" class="p-2 bg-gray-800 text-white rounded cursor-pointer"><i class="fas fa-paperclip"></i></label>
+        <input type="file" id="file-input" multiple class="hidden">
         <input type="text" id="prompt-input" placeholder="Type your message" class="flex-1 p-2 bg-gray-800 text-white border border-gray-600 rounded">
-        <button type="submit" class="p-2 bg-green-600 text-white rounded">Send</button>
+        <button type="submit" class="p-2 bg-green-600 text-white rounded"><i class="fas fa-paper-plane"></i> Send</button>
       </form>
+      <div id="rss-marquee" class="marquee bg-gray-800 text-white p-2 text-sm"></div>
     </main>
+  </div>
+  <div id="settings-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 items-center justify-center">
+    <div class="bg-gray-800 p-4 rounded">
+      <h3 class="mb-2 text-lg">Select RSS Feeds</h3>
+      <form id="settings-form" class="flex flex-col gap-2">
+        <div id="rss-options" class="flex flex-col gap-2"></div>
+        <button type="submit" class="p-2 bg-green-600 text-white rounded"><i class="fas fa-save"></i> Save</button>
+      </form>
+    </div>
   </div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
   <script src="chat.js"></script>

@@ -4,7 +4,8 @@ import fs from 'fs';
 import path from 'path';
 import multer from 'multer';
 import OpenAI from 'openai';
-import 'dotenv/config';    
+import Parser from 'rss-parser';
+import 'dotenv/config';
 import { slugify, generateTitle } from './utils.js';
 
 const app = express();
@@ -13,6 +14,7 @@ app.use(express.json());
 app.use(express.static('public'));
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const parser = new Parser();
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const PROJECTS_DIR = path.join(DATA_DIR, 'projects');
@@ -86,7 +88,14 @@ app.post('/api/projects/:projectId/chat', upload.array('files'), async (req, res
   try {
     const completion = await openai.chat.completions.create({
       model,
-      messages: [{ role: 'user', content: prompt }]
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You are Carlton, an AI assistant. Answer the user and end your response with an additional suggestion to take it to the next level.'
+        },
+        { role: 'user', content: prompt }
+      ]
     });
     responseText = completion.choices[0].message.content.trim();
   } catch (err) {
@@ -104,6 +113,18 @@ app.post('/api/projects/:projectId/chat', upload.array('files'), async (req, res
   const chatPath = path.join(PROJECTS_DIR, projectId, file);
   fs.writeFileSync(chatPath, JSON.stringify(chatData, null, 2));
   res.json({ ...chatData, id: file });
+});
+
+app.get('/api/rss', async (req, res) => {
+  const { url } = req.query;
+  if (!url) return res.status(400).json({ error: 'url required' });
+  try {
+    const feed = await parser.parseURL(url);
+    const titles = feed.items.map(i => i.title);
+    res.json({ titles });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Standalone Codex endpoint using chat completions
