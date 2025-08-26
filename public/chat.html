@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Carlton Chat</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css">
+</head>
+<body>
+  <div id="app">
+    <aside id="sidebar">
+      <section class="projects">
+        <h2>Projects</h2>
+        <ul id="project-list"></ul>
+        <button id="new-project-btn">New Project</button>
+        <button id="open-codex">Open Codex</button>
+      </section>
+    </aside>
+    <main id="chat">
+      <header>
+        <div class="spacer"></div>
+        <img src="carlton-logo.svg" id="logo" alt="Carlton logo">
+      </header>
+      <div id="messages"></div>
+      <form id="prompt-form">
+        <select id="model-select">
+          <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+          <option value="gpt-4">gpt-4</option>
+        </select>
+        <input type="file" id="file-input" multiple>
+        <input type="text" id="prompt-input" placeholder="Type your message">
+        <button type="submit">Send</button>
+      </form>
+    </main>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+  <script src="chat.js"></script>
+</body>
+</html>
