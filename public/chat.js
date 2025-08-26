@@ -120,6 +120,8 @@ promptForm.addEventListener('submit', async e => {
 function appendMessage(role, text) {
   const div = document.createElement('div');
   div.className = `message ${role}`;
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
   const regex = /```([\s\S]*?)```/g;
   let lastIndex = 0;
   let match;
@@ -128,14 +130,14 @@ function appendMessage(role, text) {
     if (before) {
       const p = document.createElement('p');
       p.textContent = before;
-      div.appendChild(p);
+      bubble.appendChild(p);
     }
     const codeText = match[1];
     const pre = document.createElement('pre');
     const code = document.createElement('code');
     code.textContent = codeText.trim();
     pre.appendChild(code);
-    div.appendChild(pre);
+    bubble.appendChild(pre);
     hljs.highlightElement(code);
     lastIndex = regex.lastIndex;
   }
@@ -143,7 +145,16 @@ function appendMessage(role, text) {
   if (after) {
     const p = document.createElement('p');
     p.textContent = after;
-    div.appendChild(p);
+    bubble.appendChild(p);
+  }
+  if (role === 'bot') {
+    const icon = document.createElement('div');
+    icon.className = 'icon-bubble';
+    icon.textContent = '🤖';
+    div.appendChild(icon);
+    div.appendChild(bubble);
+  } else {
+    div.appendChild(bubble);
   }
   messagesDiv.appendChild(div);
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
@@ -201,7 +212,7 @@ async function updateMarquee() {
     try {
       const res = await fetch(`/api/rss?url=${encodeURIComponent(url)}`);
       const json = await res.json();
-      titles.push(...json.titles.slice(0, 5));
+      titles.push(...json.titles);
     } catch (err) {
       console.error(err);
     }
