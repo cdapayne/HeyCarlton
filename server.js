@@ -111,5 +111,21 @@ app.post('/api/projects/:projectId/chat', upload.array('files'), async (req, res
   res.json({ ...chatData, id: file });
 });
 
+// Standalone Codex endpoint
+app.post('/api/codex', async (req, res) => {
+  const { prompt } = req.body;
+  if (!prompt) return res.status(400).json({ error: 'prompt required' });
+  try {
+    const completion = await openai.completions.create({
+      model: 'code-davinci-002',
+      prompt,
+      max_tokens: 256
+    });
+    res.json({ response: completion.choices[0].text.trim() });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server listening on ${PORT}`));

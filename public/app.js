@@ -3,12 +3,14 @@ const startScreen = document.getElementById('start-screen');
 const app = document.getElementById('app');
 const projectList = document.getElementById('project-list');
 const newProjectBtn = document.getElementById('new-project-btn');
-const historyList = document.getElementById('history-list');
 const promptForm = document.getElementById('prompt-form');
 const promptInput = document.getElementById('prompt-input');
 const fileInput = document.getElementById('file-input');
 const messagesDiv = document.getElementById('messages');
 const modelSelect = document.getElementById('model-select');
+const codexInput = document.getElementById('codex-input');
+const codexOutput = document.getElementById('codex-output');
+const codexSubmit = document.getElementById('codex-submit');
 
 let currentProject = null;
 
@@ -35,26 +37,26 @@ projectList.addEventListener('click', e => {
   console.log('Project list clicked', e.target);
   if (e.target.tagName === 'LI') {
     currentProject = e.target.dataset.id;
-    loadHistory();
-  }
-});
-
-historyList.addEventListener('click', async e => {
-  console.log('History list clicked', e.target);
-  if (e.target.tagName === 'LI') {
-    const chatId = e.target.dataset.id;
-    const res = await fetch(`/api/projects/${currentProject}/chats/${chatId}`);
-    const chat = await res.json();
-    renderChat(chat);
+    loadProjectHistory();
   }
 });
 
 promptForm.addEventListener('submit', async e => {
   e.preventDefault();
   console.log('Prompt form submitted');
-  if (!currentProject) return alert('Select a project');
   const prompt = promptInput.value;
   if (!prompt) return;
+  if (!currentProject) {
+    const name = prompt.trim().substring(0, 20) || 'project';
+    const resProj = await fetch('/api/projects', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name })
+    });
+    const proj = await resProj.json();
+    currentProject = proj.id;
+    loadProjects();
+  }
   appendMessage('user', prompt);
   const data = new FormData();
   data.append('prompt', prompt);
@@ -63,7 +65,6 @@ promptForm.addEventListener('submit', async e => {
   const res = await fetch(`/api/projects/${currentProject}/chat`, { method: 'POST', body: data });
   const json = await res.json();
   appendMessage('bot', json.response);
-  addHistoryItem(json);
   promptInput.value = '';
   fileInput.value = '';
 });
@@ -71,7 +72,16 @@ promptForm.addEventListener('submit', async e => {
 function appendMessage(role, text) {
   const div = document.createElement('div');
   div.className = `message ${role}`;
-  div.textContent = text;
+  if (/```/.test(text) || text.includes('\n')) {
+    const codeText = text.replace(/```/g, '');
+    const pre = document.createElement('pre');
+    const code = document.createElement('code');
+    code.textContent = codeText;
+    pre.appendChild(code);
+    div.appendChild(pre);
+  } else {
+    div.textContent = text;
+  }
   messagesDiv.appendChild(div);
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
@@ -88,23 +98,26 @@ async function loadProjects() {
   });
 }
 
-async function loadHistory() {
+async function loadProjectHistory() {
   const res = await fetch(`/api/projects/${currentProject}/chats`);
   const chats = await res.json();
-  historyList.innerHTML = '';
-  chats.forEach(c => addHistoryItem(c));
   messagesDiv.innerHTML = '';
+  for (const c of chats) {
+    const resChat = await fetch(`/api/projects/${currentProject}/chats/${c.id}`);
+    const chat = await resChat.json();
+    appendMessage('user', chat.prompt);
+    appendMessage('bot', chat.response);
+  }
 }
 
-function addHistoryItem(chat) {
-  const li = document.createElement('li');
-  li.textContent = chat.title;
-  li.dataset.id = chat.id;
-  historyList.appendChild(li);
-}
-
-function renderChat(chat) {
-  messagesDiv.innerHTML = '';
-  appendMessage('user', chat.prompt);
-  appendMessage('bot', chat.response);
-}
+codexSubmit.addEventListener('click', async () => {
+  const prompt = codexInput.value;
+  if (!prompt) return;
+  const res = await fetch('/api/codex', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt })
+  });
+  const json = await res.json();
+  codexOutput.textContent = json.response || json.error || '';
+});
