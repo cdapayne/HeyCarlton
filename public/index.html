@@ -4,11 +4,18 @@
   <meta charset="UTF-8">
   <title>Carlton</title>
   <link rel="stylesheet" href="style.css">
+  <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 <body>
+  <svg id="bg"></svg>
   <div id="landing">
     <h1>Whatcha Wanna Talk About?</h1>
-    <button id="startbtn">Start</button>
+    <div id="login">
+      <input type="text" id="username" placeholder="Username">
+      <input type="password" id="password" placeholder="Password">
+      <button id="loginbtn">Login</button>
+      <button id="guestbtn">Guest Login</button>
+    </div>
   </div>
   <script src="start.js"></script>
 </body>
