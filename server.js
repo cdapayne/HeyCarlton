@@ -84,16 +84,11 @@ app.post('/api/projects/:projectId/chat', upload.array('files'), async (req, res
 
   let responseText = '';
   try {
-    if (model === 'code-davinci-002') {
-      const completion = await openai.completions.create({ model, prompt, max_tokens: 256 });
-      responseText = completion.choices[0].text.trim();
-    } else {
-      const completion = await openai.chat.completions.create({
-        model,
-        messages: [{ role: 'user', content: prompt }]
-      });
-      responseText = completion.choices[0].message.content.trim();
-    }
+    const completion = await openai.chat.completions.create({
+      model,
+      messages: [{ role: 'user', content: prompt }]
+    });
+    responseText = completion.choices[0].message.content.trim();
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
@@ -111,17 +106,16 @@ app.post('/api/projects/:projectId/chat', upload.array('files'), async (req, res
   res.json({ ...chatData, id: file });
 });
 
-// Standalone Codex endpoint
+// Standalone Codex endpoint using chat completions
 app.post('/api/codex', async (req, res) => {
   const { prompt } = req.body;
   if (!prompt) return res.status(400).json({ error: 'prompt required' });
   try {
-    const completion = await openai.completions.create({
-      model: 'code-davinci-002',
-      prompt,
-      max_tokens: 256
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4',
+      messages: [{ role: 'user', content: prompt }]
     });
-    res.json({ response: completion.choices[0].text.trim() });
+    res.json({ response: completion.choices[0].message.content.trim() });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

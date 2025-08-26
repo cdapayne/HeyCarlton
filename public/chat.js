@@ -1,28 +1,19 @@
-const startBtn = document.getElementById('startbtn');
-const startScreen = document.getElementById('start-screen');
-const app = document.getElementById('app');
 const projectList = document.getElementById('project-list');
 const newProjectBtn = document.getElementById('new-project-btn');
+const openCodexBtn = document.getElementById('open-codex');
 const promptForm = document.getElementById('prompt-form');
 const promptInput = document.getElementById('prompt-input');
 const fileInput = document.getElementById('file-input');
 const messagesDiv = document.getElementById('messages');
 const modelSelect = document.getElementById('model-select');
-const codexInput = document.getElementById('codex-input');
-const codexOutput = document.getElementById('codex-output');
-const codexSubmit = document.getElementById('codex-submit');
 
 let currentProject = null;
 
-startBtn.addEventListener('click', () => {
-  console.log('Start button clicked');
-  startScreen.classList.add('hidden');
-  app.classList.remove('hidden');
-  loadProjects();
+openCodexBtn.addEventListener('click', () => {
+  window.open('codex.html', 'codexWindow');
 });
 
 newProjectBtn.addEventListener('click', async () => {
-  console.log('New project button clicked');
   const name = prompt('Project name');
   if (!name) return;
   await fetch('/api/projects', {
@@ -34,7 +25,6 @@ newProjectBtn.addEventListener('click', async () => {
 });
 
 projectList.addEventListener('click', e => {
-  console.log('Project list clicked', e.target);
   if (e.target.tagName === 'LI') {
     currentProject = e.target.dataset.id;
     loadProjectHistory();
@@ -43,7 +33,6 @@ projectList.addEventListener('click', e => {
 
 promptForm.addEventListener('submit', async e => {
   e.preventDefault();
-  console.log('Prompt form submitted');
   const prompt = promptInput.value;
   if (!prompt) return;
   if (!currentProject) {
@@ -79,6 +68,7 @@ function appendMessage(role, text) {
     code.textContent = codeText;
     pre.appendChild(code);
     div.appendChild(pre);
+    hljs.highlightElement(code);
   } else {
     div.textContent = text;
   }
@@ -110,14 +100,4 @@ async function loadProjectHistory() {
   }
 }
 
-codexSubmit.addEventListener('click', async () => {
-  const prompt = codexInput.value;
-  if (!prompt) return;
-  const res = await fetch('/api/codex', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt })
-  });
-  const json = await res.json();
-  codexOutput.textContent = json.response || json.error || '';
-});
+loadProjects();
