@@ -13,12 +13,14 @@ const modelSelect = document.getElementById('model-select');
 let currentProject = null;
 
 startBtn.addEventListener('click', () => {
+  console.log('Start button clicked');
   startScreen.classList.add('hidden');
   app.classList.remove('hidden');
   loadProjects();
 });
 
 newProjectBtn.addEventListener('click', async () => {
+  console.log('New project button clicked');
   const name = prompt('Project name');
   if (!name) return;
   await fetch('/api/projects', {
@@ -30,6 +32,7 @@ newProjectBtn.addEventListener('click', async () => {
 });
 
 projectList.addEventListener('click', e => {
+  console.log('Project list clicked', e.target);
   if (e.target.tagName === 'LI') {
     currentProject = e.target.dataset.id;
     loadHistory();
@@ -37,6 +40,7 @@ projectList.addEventListener('click', e => {
 });
 
 historyList.addEventListener('click', async e => {
+  console.log('History list clicked', e.target);
   if (e.target.tagName === 'LI') {
     const chatId = e.target.dataset.id;
     const res = await fetch(`/api/projects/${currentProject}/chats/${chatId}`);
@@ -47,6 +51,7 @@ historyList.addEventListener('click', async e => {
 
 promptForm.addEventListener('submit', async e => {
   e.preventDefault();
+  console.log('Prompt form submitted');
   if (!currentProject) return alert('Select a project');
   const prompt = promptInput.value;
   if (!prompt) return;
