@@ -123,6 +123,11 @@ h1, h2, h3, h4, h5, h6 {
   transition: background 0.2s;
 }
 
+#sidebar li.selected{
+  background: #fbbf24;
+  color: #000;
+}
+
 #sidebar li:hover{
   background: #2d333b;
 }

@@ -137,6 +137,20 @@ app.get('/api/rss', async (req, res) => {
   }
 });
 
+// Return current OpenAI account balance
+app.get('/api/balance', async (req, res) => {
+  try {
+    const response = await fetch('https://api.openai.com/v1/dashboard/billing/credit_grants', {
+      headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}` }
+    });
+    const data = await response.json();
+    const balance = data.total_available ?? 0;
+    res.json({ balance });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Standalone Codex endpoint using chat completions
 app.post('/api/codex', async (req, res) => {
   const { prompt } = req.body;
