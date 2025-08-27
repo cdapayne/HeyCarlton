@@ -16,6 +16,9 @@ const rssMarquee = document.getElementById('rss-marquee');
 const zipInput = document.getElementById('zip-input');
 const weatherDiv = document.getElementById('weather');
 const tickerLabel = document.querySelector('.ticker-label');
+const customFeedName = document.getElementById('custom-feed-name');
+const customFeedUrl = document.getElementById('custom-feed-url');
+const addFeedBtn = document.getElementById('add-feed-btn');
 
 function updateTickerLabel() {
   if (window.matchMedia('(max-width: 600px)').matches) {
@@ -31,13 +34,14 @@ function getFlyInClass() {
   const dirs = ['fly-in-left', 'fly-in-right', 'fly-in-top', 'fly-in-bottom'];
   return dirs[Math.floor(Math.random() * dirs.length)];
 }
-
-const allFeeds = {
+const defaultFeeds = {
   cnn: { name: 'CNN', url: 'https://rss.cnn.com/rss/cnn_topstories.rss' },
   abc: { name: 'ABC', url: 'https://feeds.abcnews.com/abcnews/topstories' },
   sports: { name: 'Sports', url: 'https://www.espn.com/espn/rss/news' }
 };
-let selectedFeeds = JSON.parse(localStorage.getItem('rssFeeds') || '["cnn","abc","sports"]');
+let customFeeds = JSON.parse(localStorage.getItem('customFeeds') || '{}');
+const allFeeds = { ...defaultFeeds, ...customFeeds };
+let selectedFeeds = JSON.parse(localStorage.getItem('rssFeeds') || JSON.stringify(Object.keys(defaultFeeds)));
 let userZip = localStorage.getItem('zip') || '';
 const studyData = [];
 
@@ -106,6 +110,21 @@ settingsBtn.addEventListener('click', () => {
   renderSettings();
   settingsModal.classList.remove('hidden');
   settingsModal.classList.add('flex');
+});
+
+addFeedBtn.addEventListener('click', () => {
+  const name = customFeedName.value.trim();
+  const url = customFeedUrl.value.trim();
+  if (!name || !url) return;
+  const key = `custom_${Date.now()}`;
+  allFeeds[key] = { name, url };
+  customFeeds[key] = { name, url };
+  localStorage.setItem('customFeeds', JSON.stringify(customFeeds));
+  selectedFeeds.push(key);
+  localStorage.setItem('rssFeeds', JSON.stringify(selectedFeeds));
+  renderSettings();
+  customFeedName.value = '';
+  customFeedUrl.value = '';
 });
 
 settingsForm.addEventListener('submit', e => {
