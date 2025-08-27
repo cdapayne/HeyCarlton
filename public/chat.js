@@ -4,7 +4,6 @@ const openCodexBtn = document.getElementById('open-codex');
 const studyModeBtn = document.getElementById('study-mode-btn');
 const promptForm = document.getElementById('prompt-form');
 const promptInput = document.getElementById('prompt-input');
-const fileInput = document.getElementById('file-input');
 const messagesDiv = document.getElementById('messages');
 const modelSelect = document.getElementById('model-select');
 const balanceDiv = document.getElementById('balance');
@@ -15,6 +14,7 @@ const rssOptions = document.getElementById('rss-options');
 const rssMarquee = document.getElementById('rss-marquee');
 const zipInput = document.getElementById('zip-input');
 const weatherDiv = document.getElementById('weather');
+const datetimeDiv = document.getElementById('datetime');
 const tickerLabel = document.querySelector('.ticker-label');
 const customFeedName = document.getElementById('custom-feed-name');
 const customFeedUrl = document.getElementById('custom-feed-url');
@@ -98,12 +98,12 @@ newProjectBtn.addEventListener('click', async () => {
 });
 
 projectList.addEventListener('click', e => {
-  if (e.target.tagName === 'LI') {
-    currentProject = e.target.dataset.id;
-    document.querySelectorAll('#project-list li').forEach(li => li.classList.remove('selected'));
-    e.target.classList.add('selected');
-    loadProjectHistory();
-  }
+  const li = e.target.closest('li');
+  if (!li) return;
+  currentProject = li.dataset.id;
+  document.querySelectorAll('#project-list li').forEach(li => li.classList.remove('selected'));
+  li.classList.add('selected');
+  loadProjectHistory();
 });
 
 settingsBtn.addEventListener('click', () => {
@@ -158,14 +158,14 @@ promptForm.addEventListener('submit', async e => {
     currentProject = proj.id;
     loadProjects();
   }
-  appendMessage('user', prompt, Array.from(fileInput.files));
+  appendMessage('user', prompt);
   const thinkingDiv = showThinking();
-  const data = new FormData();
-  data.append('prompt', prompt);
-  data.append('model', modelSelect.value);
-  Array.from(fileInput.files).forEach(f => data.append('files', f));
   try {
-    const res = await fetch(`/api/projects/${currentProject}/chat`, { method: 'POST', body: data });
+    const res = await fetch(`/api/projects/${currentProject}/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, model: modelSelect.value })
+    });
     const json = await res.json();
     messagesDiv.removeChild(thinkingDiv);
     appendMessage('bot', json.response);
@@ -174,13 +174,12 @@ promptForm.addEventListener('submit', async e => {
     console.error(err);
   }
   promptInput.value = '';
-  fileInput.value = '';
   remainingQueries--;
   localStorage.setItem('remainingQueries', remainingQueries);
   updateQueryDisplay();
 });
 
-function appendMessage(role, text, attachments = []) {
+function appendMessage(role, text) {
   const div = document.createElement('div');
   div.className = `message ${role}`;
   const bubble = document.createElement('div');
@@ -211,34 +210,6 @@ function appendMessage(role, text, attachments = []) {
     p.textContent = after;
     bubble.appendChild(p);
   }
-  if (attachments.length) {
-    const atDiv = document.createElement('div');
-    atDiv.className = 'attachments mt-2 flex flex-wrap gap-2';
-    attachments.forEach(file => {
-      if (file instanceof File) {
-        const url = URL.createObjectURL(file);
-        if (file.type.startsWith('image/')) {
-          const img = document.createElement('img');
-          img.src = url;
-          img.alt = file.name;
-          img.className = 'attachment-img';
-          atDiv.appendChild(img);
-        } else {
-          const link = document.createElement('a');
-          link.href = url;
-          link.textContent = file.name;
-          link.className = 'attachment-link underline';
-          link.target = '_blank';
-          atDiv.appendChild(link);
-        }
-      } else if (file && file.original) {
-        const span = document.createElement('span');
-        span.textContent = file.original;
-        atDiv.appendChild(span);
-      }
-    });
-    bubble.appendChild(atDiv);
-  }
   if (role === 'bot') {
     const icon = document.createElement('div');
     icon.className = 'icon-bubble';
@@ -258,7 +229,25 @@ async function loadProjects() {
   projectList.innerHTML = '';
   projects.forEach(p => {
     const li = document.createElement('li');
-    li.textContent = p.name;
+    const span = document.createElement('span');
+    span.textContent = p.name;
+    li.appendChild(span);
+    const btn = document.createElement('button');
+    btn.className = 'proj-settings ml-2';
+    btn.innerHTML = '<i class="fas fa-cog"></i>';
+    btn.addEventListener('click', async e => {
+      e.stopPropagation();
+      const newPrompt = prompt('Enter AI prompt', p.prompt || '');
+      if (newPrompt !== null) {
+        await fetch(`/api/projects/${p.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: newPrompt })
+        });
+        p.prompt = newPrompt;
+      }
+    });
+    li.appendChild(btn);
     li.dataset.id = p.id;
     if (p.id === currentProject) li.classList.add('selected');
     projectList.appendChild(li);
@@ -272,7 +261,7 @@ async function loadProjectHistory() {
   for (const c of chats) {
     const resChat = await fetch(`/api/projects/${currentProject}/chats/${c.id}`);
     const chat = await resChat.json();
-    appendMessage('user', chat.prompt, chat.files || []);
+    appendMessage('user', chat.prompt);
     appendMessage('bot', chat.response);
   }
 }
@@ -363,5 +352,11 @@ function showThinking() {
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
   return div;
 }
+function updateDateTime() {
+  datetimeDiv.textContent = new Date().toLocaleString();
+}
 
 updateWeather();
+updateDateTime();
+setInterval(updateDateTime, 60000);
+setInterval(updateWeather, 600000);

@@ -2,7 +2,6 @@ import express from 'express';
 import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
-import multer from 'multer';
 import OpenAI from 'openai';
 import Parser from 'rss-parser';
 import 'dotenv/config';
@@ -20,18 +19,7 @@ const DATA_DIR = path.join(process.cwd(), 'data');
 const PROJECTS_DIR = path.join(DATA_DIR, 'projects');
 fs.mkdirSync(PROJECTS_DIR, { recursive: true });
 
-const storage = multer.diskStorage({
-  destination(req, file, cb) {
-    const projectPath = path.join(PROJECTS_DIR, req.params.projectId);
-    fs.mkdirSync(projectPath, { recursive: true });
-    cb(null, projectPath);
-  },
-  filename(req, file, cb) {
-    cb(null, Date.now() + '-' + file.originalname);
-  }
-});
-
-const upload = multer({ storage });
+const DEFAULT_PROMPT = 'You are Carlton, an AI assistant. Answer the user and end your response with an additional suggestion to take it to the next level.';
 
 // Create project
 app.post('/api/projects', (req, res) => {
@@ -40,8 +28,9 @@ app.post('/api/projects', (req, res) => {
   const id = slugify(name);
   const dir = path.join(PROJECTS_DIR, id);
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(path.join(dir, 'meta.json'), JSON.stringify({ id, name, created: new Date().toISOString() }, null, 2));
-  res.json({ id, name });
+  const meta = { id, name, prompt: DEFAULT_PROMPT, created: new Date().toISOString() };
+  fs.writeFileSync(path.join(dir, 'meta.json'), JSON.stringify(meta, null, 2));
+  res.json(meta);
 });
 
 // List projects
@@ -50,10 +39,23 @@ app.get('/api/projects', (req, res) => {
     .filter(f => fs.statSync(path.join(PROJECTS_DIR, f)).isDirectory())
     .map(id => {
       const metaPath = path.join(PROJECTS_DIR, id, 'meta.json');
-      const meta = fs.existsSync(metaPath) ? JSON.parse(fs.readFileSync(metaPath)) : { id, name: id };
+      const meta = fs.existsSync(metaPath)
+        ? JSON.parse(fs.readFileSync(metaPath))
+        : { id, name: id, prompt: DEFAULT_PROMPT };
       return meta;
     });
   res.json(projects);
+});
+
+app.put('/api/projects/:projectId', (req, res) => {
+  const metaPath = path.join(PROJECTS_DIR, req.params.projectId, 'meta.json');
+  if (!fs.existsSync(metaPath)) return res.status(404).json({ error: 'not found' });
+  const meta = JSON.parse(fs.readFileSync(metaPath));
+  const { name, prompt } = req.body;
+  if (name) meta.name = name;
+  if (prompt !== undefined) meta.prompt = prompt;
+  fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+  res.json(meta);
 });
 
 // List chats for a project
@@ -79,33 +81,25 @@ app.get('/api/projects/:projectId/chats/:chatId', (req, res) => {
 });
 
 // Send chat
-app.post('/api/projects/:projectId/chat', upload.array('files'), async (req, res) => {
+app.post('/api/projects/:projectId/chat', async (req, res) => {
   const projectId = req.params.projectId;
   const { prompt, model = 'gpt-3.5-turbo' } = req.body;
   if (!prompt) return res.status(400).json({ error: 'prompt required' });
 
+  const metaPath = path.join(PROJECTS_DIR, projectId, 'meta.json');
+  let projectPrompt = DEFAULT_PROMPT;
+  if (fs.existsSync(metaPath)) {
+    try {
+      projectPrompt = JSON.parse(fs.readFileSync(metaPath)).prompt || projectPrompt;
+    } catch {}
+  }
+
   let responseText = '';
   try {
-    const sys = {
-      role: 'system',
-      content: 'You are Carlton, an AI assistant. Answer the user and end your response with an additional suggestion to take it to the next level.'
-    };
-    let userMessage;
-    if (req.files && req.files.length) {
-      const parts = [{ type: 'text', text: prompt }];
-      for (const f of req.files) {
-        if (f.mimetype && f.mimetype.startsWith('image/')) {
-          const b64 = fs.readFileSync(f.path, { encoding: 'base64' });
-          parts.push({ type: 'image', image_url: `data:${f.mimetype};base64,${b64}` });
-        }
-      }
-      userMessage = { role: 'user', content: parts };
-    } else {
-      userMessage = { role: 'user', content: prompt };
-    }
+    const sys = { role: 'system', content: projectPrompt };
     const completion = await openai.chat.completions.create({
       model,
-      messages: [sys, userMessage]
+      messages: [sys, { role: 'user', content: prompt }]
     });
     responseText = completion.choices[0].message.content.trim();
   } catch (err) {
@@ -117,8 +111,7 @@ app.post('/api/projects/:projectId/chat', upload.array('files'), async (req, res
     title,
     date: new Date().toISOString(),
     prompt,
-    response: responseText,
-    files: req.files ? req.files.map(f => ({ original: f.originalname, stored: f.filename })) : []
+    response: responseText
   };
   const chatPath = path.join(PROJECTS_DIR, projectId, file);
   fs.writeFileSync(chatPath, JSON.stringify(chatData, null, 2));

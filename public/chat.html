@@ -54,8 +54,6 @@
       <div id="messages" class="flex-1 p-4 overflow-y-auto"></div>
       <div id="input-area" class="sticky bottom-0 flex flex-col bg-gray-900 border-t border-gray-700">
         <form id="prompt-form" class="flex gap-2 p-2 flex-col sm:flex-row">
-          <label for="file-input" class="p-2 bg-gray-800 text-white rounded cursor-pointer"><i class="fas fa-paperclip"></i></label>
-          <input type="file" id="file-input" multiple class="hidden">
           <input type="text" id="prompt-input" placeholder="Type your message" class="flex-1 p-2 bg-gray-800 text-white border border-gray-600 rounded">
           <button type="submit" class="p-2 bg-green-600 text-white rounded"><i class="fas fa-paper-plane"></i> Send</button>
         </form>
@@ -63,6 +61,7 @@
           <span class="ticker-label px-2 py-1 bg-gray-700">PayneBrain News Ticker</span>
           <div id="rss-marquee" class="marquee p-2 flex-1"></div>
           <div id="weather" class="flex items-center px-2"></div>
+          <div id="datetime" class="flex items-center px-2"></div>
         </div>
       </div>
     </main>
