@@ -1,7 +1,6 @@
 const projectList = document.getElementById('project-list');
 const newProjectBtn = document.getElementById('new-project-btn');
 const openCodexBtn = document.getElementById('open-codex');
-const studyModeBtn = document.getElementById('study-mode-btn');
 const promptForm = document.getElementById('prompt-form');
 const promptInput = document.getElementById('prompt-input');
 const messagesDiv = document.getElementById('messages');
@@ -43,7 +42,6 @@ let customFeeds = JSON.parse(localStorage.getItem('customFeeds') || '{}');
 const allFeeds = { ...defaultFeeds, ...customFeeds };
 let selectedFeeds = JSON.parse(localStorage.getItem('rssFeeds') || JSON.stringify(Object.keys(defaultFeeds)));
 let userZip = localStorage.getItem('zip') || '';
-const studyData = [];
 
 let remainingQueries = parseInt(localStorage.getItem('remainingQueries') || '0');
 const queryLimit = document.createElement('div');
@@ -69,25 +67,16 @@ openCodexBtn.addEventListener('click', () => {
   window.open('codex.html', 'codexWindow');
 });
 
-studyModeBtn.addEventListener('click', () => {
-  const action = prompt('Type "add" to add info or "quiz" to start quiz');
-  if (action === 'add') {
-    const question = prompt('Enter a question or term');
-    const answer = prompt('Enter the answer');
-    if (question && answer) studyData.push({ question, answer });
-  } else if (action === 'quiz') {
-    if (!studyData.length) {
-      alert('No study data yet');
-      return;
-    }
-    const item = studyData[Math.floor(Math.random() * studyData.length)];
-    const resp = prompt(item.question);
-    alert(resp === item.answer ? 'Correct!' : `Incorrect. ${item.answer}`);
-  }
-});
-
 newProjectBtn.addEventListener('click', async () => {
-  const name = prompt('Project name');
+  const { value: name } = await Swal.fire({
+    title: 'Project name',
+    input: 'text',
+    inputPlaceholder: 'Enter project name',
+    showCancelButton: true,
+    confirmButtonText: 'Create',
+    background: '#1f2937',
+    color: '#fff'
+  });
   if (!name) return;
   await fetch('/api/projects', {
     method: 'POST',
@@ -144,7 +133,12 @@ promptForm.addEventListener('submit', async e => {
   const prompt = promptInput.value;
   if (!prompt) return;
   if (remainingQueries <= 0) {
-    alert('Query limit reached');
+    await Swal.fire({
+      icon: 'warning',
+      title: 'Query limit reached',
+      background: '#1f2937',
+      color: '#fff'
+    });
     return;
   }
   if (!currentProject) {
@@ -233,12 +227,20 @@ async function loadProjects() {
     span.textContent = p.name;
     li.appendChild(span);
     const btn = document.createElement('button');
-    btn.className = 'proj-settings ml-2';
+    btn.className = 'proj-settings ml-2 text-xs';
     btn.innerHTML = '<i class="fas fa-cog"></i>';
     btn.addEventListener('click', async e => {
       e.stopPropagation();
-      const newPrompt = prompt('Enter AI prompt', p.prompt || '');
-      if (newPrompt !== null) {
+      const { value: newPrompt } = await Swal.fire({
+        title: 'Enter AI prompt',
+        input: 'text',
+        inputValue: p.prompt || '',
+        showCancelButton: true,
+        confirmButtonText: 'Save',
+        background: '#1f2937',
+        color: '#fff'
+      });
+      if (newPrompt !== undefined && newPrompt !== null) {
         await fetch(`/api/projects/${p.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -248,6 +250,12 @@ async function loadProjects() {
       }
     });
     li.appendChild(btn);
+    if (p.created) {
+      const dateSpan = document.createElement('span');
+      dateSpan.className = 'project-date text-gray-400 text-xs ml-2';
+      dateSpan.textContent = new Date(p.created).toLocaleDateString();
+      li.appendChild(dateSpan);
+    }
     li.dataset.id = p.id;
     if (p.id === currentProject) li.classList.add('selected');
     projectList.appendChild(li);

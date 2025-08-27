@@ -101,6 +101,22 @@ h1, h2, h3, h4, h5, h6 {
   transform: translateY(-2px);
 }
 
+#project-list .proj-settings {
+  width: auto;
+  padding: 0.25rem;
+  background: #2d333b;
+  border: 1px solid #444c56;
+  border-radius: 6px;
+  color: #c9d1d9;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#project-list .proj-settings:hover {
+  background: #444c56;
+}
+
 #sidebar h2{
   margin-top: 0.5rem;
   font-size: 0.9rem;
@@ -130,6 +146,14 @@ h1, h2, h3, h4, h5, h6 {
 
 #sidebar li:hover{
   background: #2d333b;
+}
+
+#weather{
+  background-color: dodgerblue;
+}
+
+#datetime{
+  background-color: pink;
 }
 
 /* Chat area flows to the right via margin (no flex/grid on #app) */
