@@ -271,7 +271,7 @@ async function updateWeather() {
     const humidity = parseInt(current.humidity);
     const iconUrl = current.weatherIconUrl[0].value;
     weatherDiv.style.color = humidity < 55 ? 'limegreen' : '';
-    weatherDiv.innerHTML = `<img src="${iconUrl}" alt="icon" class="w-6 h-6 mr-1">${current.temp_F}\u00B0F` + (humidity < 55 ? ' <span>Perfect Day</span>' : '');
+    weatherDiv.innerHTML = `<img src="${iconUrl}" alt="icon" class="w-6 h-6 mr-1">${current.temp_F}\u00B0F ${humidity}%`;
   } catch (e) {
     console.error(e);
     weatherDiv.textContent = '';
