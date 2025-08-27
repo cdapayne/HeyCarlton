@@ -14,12 +14,16 @@ const rssOptions = document.getElementById('rss-options');
 const rssMarquee = document.getElementById('rss-marquee');
 const zipInput = document.getElementById('zip-input');
 const weatherDiv = document.getElementById('weather');
+const customRssName = document.getElementById('custom-rss-name');
+const customRssUrl = document.getElementById('custom-rss-url');
+const addRssBtn = document.getElementById('add-rss-btn');
 
 const allFeeds = {
   cnn: { name: 'CNN', url: 'https://rss.cnn.com/rss/cnn_topstories.rss' },
   abc: { name: 'ABC', url: 'https://feeds.abcnews.com/abcnews/topstories' },
   sports: { name: 'Sports', url: 'https://www.espn.com/espn/rss/news' }
 };
+const customFeeds = JSON.parse(localStorage.getItem('customFeeds') || '{}');
 let selectedFeeds = JSON.parse(localStorage.getItem('rssFeeds') || '["cnn","abc","sports"]');
 let userZip = localStorage.getItem('zip') || '';
 const studyData = [];
@@ -87,6 +91,21 @@ settingsForm.addEventListener('submit', e => {
   settingsModal.classList.remove('flex');
   updateMarquee();
   updateWeather();
+});
+
+addRssBtn.addEventListener('click', () => {
+  const name = customRssName.value.trim();
+  const url = customRssUrl.value.trim();
+  if (!name || !url) return;
+  const key = 'user_' + Date.now();
+  customFeeds[key] = { name, url };
+  localStorage.setItem('customFeeds', JSON.stringify(customFeeds));
+  selectedFeeds.push(key);
+  localStorage.setItem('rssFeeds', JSON.stringify(selectedFeeds));
+  customRssName.value = '';
+  customRssUrl.value = '';
+  renderSettings();
+  updateMarquee();
 });
 
 promptForm.addEventListener('submit', async e => {
@@ -195,7 +214,11 @@ function appendMessage(role, text, attachments = []) {
     div.appendChild(icon);
     div.appendChild(bubble);
   } else {
+    const icon = document.createElement('div');
+    icon.className = 'icon-bubble';
+    icon.textContent = '👤';
     div.appendChild(bubble);
+    div.appendChild(icon);
   }
   messagesDiv.appendChild(div);
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
@@ -234,7 +257,8 @@ function updateQueryDisplay() {
 
 function renderSettings() {
   rssOptions.innerHTML = '';
-  Object.entries(allFeeds).forEach(([key, feed]) => {
+  const feeds = { ...allFeeds, ...customFeeds };
+  Object.entries(feeds).forEach(([key, feed]) => {
     const label = document.createElement('label');
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
@@ -249,10 +273,12 @@ function renderSettings() {
 
 async function updateMarquee() {
   const titles = [];
+  const feeds = { ...allFeeds, ...customFeeds };
   for (const key of selectedFeeds) {
-    const url = allFeeds[key].url;
+    const feed = feeds[key];
+    if (!feed) continue;
     try {
-      const res = await fetch(`/api/rss?url=${encodeURIComponent(url)}`);
+      const res = await fetch(`/api/rss?url=${encodeURIComponent(feed.url)}`);
       const json = await res.json();
       titles.push(...json.titles);
     } catch (err) {

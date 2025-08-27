@@ -153,6 +153,7 @@ header{
   gap: 0.75rem;
   scrollbar-width: thin;
   scrollbar-color: #30363d transparent;
+  font-size: 1.25rem;
 }
 #messages::-webkit-scrollbar{ height: 8px; width: 8px; }
 #messages::-webkit-scrollbar-thumb{ background:#30363d; border-radius: 8px; }
@@ -161,6 +162,7 @@ header{
 /* Message rows (already flex); add subtle in/out animation */
 .message{
   width: 100%;
+  display: flex;
   gap: 0.5rem;
   animation: msgPop .18s ease-out;
 }
@@ -308,6 +310,9 @@ pre{
 }
 #rss-ticker {
   font-size: 16px;
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
 }
 .marquee-content span {
   padding-right: 2rem;

@@ -96,7 +96,7 @@ app.post('/api/projects/:projectId/chat', upload.array('files'), async (req, res
       for (const f of req.files) {
         if (f.mimetype && f.mimetype.startsWith('image/')) {
           const b64 = fs.readFileSync(f.path, { encoding: 'base64' });
-          parts.push({ type: 'image', image_url: `data:${f.mimetype};base64,${b64}` });
+          parts.push({ type: 'image_url', image_url: `data:${f.mimetype};base64,${b64}` });
         }
       }
       userMessage = { role: 'user', content: parts };
