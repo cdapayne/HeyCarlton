@@ -127,6 +127,11 @@ h1, h2, h3, h4, h5, h6 {
   background: #2d333b;
 }
 
+#project-list li.selected{
+  background: yellow;
+  color: #000;
+}
+
 /* Chat area flows to the right via margin (no flex/grid on #app) */
 #chat{
   margin-left: 300px;      /* sits to the right of fixed sidebar */

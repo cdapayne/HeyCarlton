@@ -7,6 +7,7 @@ const promptInput = document.getElementById('prompt-input');
 const fileInput = document.getElementById('file-input');
 const messagesDiv = document.getElementById('messages');
 const modelSelect = document.getElementById('model-select');
+const balanceSpan = document.getElementById('balance');
 const settingsBtn = document.getElementById('settings-btn');
 const settingsModal = document.getElementById('settings-modal');
 const settingsForm = document.getElementById('settings-form');
@@ -36,6 +37,18 @@ updateQueryDisplay();
 
 let currentProject = null;
 
+async function updateBalance() {
+  try {
+    const res = await fetch('/api/balance');
+    const data = await res.json();
+    balanceSpan.textContent = `Balance: $${parseFloat(data.balance).toFixed(2)}`;
+  } catch (e) {
+    balanceSpan.textContent = 'Balance: N/A';
+  }
+}
+updateBalance();
+setInterval(updateBalance, 60000);
+
 openCodexBtn.addEventListener('click', () => {
   window.open('codex.html', 'codexWindow');
 });
@@ -60,17 +73,21 @@ studyModeBtn.addEventListener('click', () => {
 newProjectBtn.addEventListener('click', async () => {
   const name = prompt('Project name');
   if (!name) return;
-  await fetch('/api/projects', {
+  const resProj = await fetch('/api/projects', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name })
   });
+  const proj = await resProj.json();
+  currentProject = proj.id;
   loadProjects();
 });
 
 projectList.addEventListener('click', e => {
   if (e.target.tagName === 'LI') {
     currentProject = e.target.dataset.id;
+    projectList.querySelectorAll('li').forEach(li => li.classList.remove('selected'));
+    e.target.classList.add('selected');
     loadProjectHistory();
   }
 });
@@ -232,6 +249,7 @@ async function loadProjects() {
     const li = document.createElement('li');
     li.textContent = p.name;
     li.dataset.id = p.id;
+    if (p.id === currentProject) li.classList.add('selected');
     projectList.appendChild(li);
   });
 }
