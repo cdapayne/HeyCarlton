@@ -8,7 +8,7 @@ function resize() {
 resize();
 window.addEventListener('resize', resize);
 
-const nodes = d3.range(100).map(() => ({
+const nodes = d3.range(500).map(() => ({
   x: Math.random() * canvas.width,
   y: Math.random() * canvas.height,
   vx: (Math.random() - 0.5) * 2,
