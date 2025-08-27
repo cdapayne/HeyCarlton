@@ -130,8 +130,8 @@ app.get('/api/rss', async (req, res) => {
   if (!url) return res.status(400).json({ error: 'url required' });
   try {
     const feed = await parser.parseURL(url);
-    const titles = feed.items.map(i => i.title);
-    res.json({ titles });
+    const items = feed.items.map(i => ({ title: i.title, link: i.link }));
+    res.json({ items });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

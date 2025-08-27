@@ -300,20 +300,22 @@ function renderSettings() {
 }
 
 async function updateMarquee() {
-  const titles = [];
+  const items = [];
   for (const key of selectedFeeds) {
     const url = allFeeds[key].url;
     try {
       const res = await fetch(`/api/rss?url=${encodeURIComponent(url)}`);
       const json = await res.json();
-      titles.push(...json.titles);
+      if (json.items) items.push(...json.items);
     } catch (err) {
       console.error(err);
     }
   }
   const content = document.createElement('div');
   content.className = 'marquee-content';
-  content.innerHTML = titles.map(t => `<span>${t}</span>`).join('');
+  content.innerHTML = items
+    .map(({ title, link }) => `<span><a href="${link}" target="_blank" rel="noopener">${title}</a></span>`) 
+    .join('');
   rssMarquee.innerHTML = '';
   rssMarquee.appendChild(content);
 }

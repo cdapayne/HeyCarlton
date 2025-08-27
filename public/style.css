@@ -356,6 +356,13 @@ pre{
   color: red;
   margin-right: 0.5rem;
 }
+#rss-ticker a {
+  color: inherit;
+  text-decoration: none;
+}
+#rss-ticker a:hover {
+  text-decoration: underline;
+}
 @keyframes marquee {
   0% { transform: translateX(0); }
   100% { transform: translateX(-100%); }
