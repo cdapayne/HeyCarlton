@@ -23,7 +23,7 @@ function updateTickerLabel() {
   if (window.matchMedia('(max-width: 600px)').matches) {
     tickerLabel.textContent = 'PNT:';
   } else {
-    tickerLabel.textContent = 'PayneBrain News Ticker';
+    tickerLabel.textContent = '';
   }
 }
 window.addEventListener('resize', updateTickerLabel);
