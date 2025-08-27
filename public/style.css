@@ -65,6 +65,15 @@ h1, h2, h3, h4, h5, h6 {
     0 0 0 1px rgba(255,255,255,.04) inset,
     0 10px 30px rgba(0,0,0,.5);
 }
+#logo{
+  width: auto;
+}
+
+#ticker-logo{
+  width:180px;
+  height: 35px;
+  background-color: blackß;
+}
 
 /* Sidebar fixed on the left; #app stays block */
 #sidebar{
@@ -101,6 +110,22 @@ h1, h2, h3, h4, h5, h6 {
   transform: translateY(-2px);
 }
 
+#project-list .proj-settings {
+  width: auto;
+  padding: 0.25rem;
+  background: #2d333b;
+  border: 1px solid #444c56;
+  border-radius: 6px;
+  color: #c9d1d9;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#project-list .proj-settings:hover {
+  background: #444c56;
+}
+
 #sidebar h2{
   margin-top: 0.5rem;
   font-size: 0.9rem;
@@ -130,6 +155,14 @@ h1, h2, h3, h4, h5, h6 {
 
 #sidebar li:hover{
   background: #2d333b;
+}
+
+#weather{
+  background-color: rgb(0, 4, 255);
+}
+
+#datetime{
+  background-color: rgb(0, 0, 0);
 }
 
 /* Chat area flows to the right via margin (no flex/grid on #app) */

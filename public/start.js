@@ -43,7 +43,12 @@ document.getElementById('loginbtn').addEventListener('click', () => {
   if (u === 'admin' && p === 'admin123') {
     login('admin');
   } else {
-    alert('Invalid credentials');
+    Swal.fire({
+      icon: 'error',
+      title: 'Invalid credentials',
+      background: '#1f2937',
+      color: '#fff'
+    });
   }
 });
 
