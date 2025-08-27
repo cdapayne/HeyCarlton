@@ -137,6 +137,18 @@ app.get('/api/rss', async (req, res) => {
   }
 });
 
+app.get('/api/balance', async (req, res) => {
+  try {
+    const resp = await fetch('https://api.openai.com/v1/dashboard/billing/credit_grants', {
+      headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}` }
+    });
+    const data = await resp.json();
+    res.json({ balance: data.total_available });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Standalone Codex endpoint using chat completions
 app.post('/api/codex', async (req, res) => {
   const { prompt } = req.body;
