@@ -1,6 +1,6 @@
 # Carlton Assistant
 
-Carlton is a simple web-based AI assistant that uses the OpenAI API. It features project-based organization, chat history with auto-generated titles, and file uploads.
+Carlton is a simple web-based AI assistant that uses the OpenAI API. It features project-based organization and chat history with auto-generated titles.
 
 ## Setup
 
