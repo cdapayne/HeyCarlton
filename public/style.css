@@ -184,7 +184,33 @@ header{
   box-shadow:
     0 1px 0 rgba(255,255,255,.05) inset,
     0 6px 20px rgba(0,0,0,.25);
+  opacity: 0;
 }
+
+@keyframes fly-in-left {
+  from { transform: translateX(-50px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes fly-in-right {
+  from { transform: translateX(50px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes fly-in-top {
+  from { transform: translateY(-50px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes fly-in-bottom {
+  from { transform: translateY(50px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.bubble.fly-in-left { animation: fly-in-left 1s ease-out forwards; }
+.bubble.fly-in-right { animation: fly-in-right 1s ease-out forwards; }
+.bubble.fly-in-top { animation: fly-in-top 1s ease-out forwards; }
+.bubble.fly-in-bottom { animation: fly-in-bottom 1s ease-out forwards; }
 
 /* Left (bot) bubble + tail */
 .message.bot .bubble{

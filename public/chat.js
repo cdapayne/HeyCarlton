@@ -15,6 +15,22 @@ const rssOptions = document.getElementById('rss-options');
 const rssMarquee = document.getElementById('rss-marquee');
 const zipInput = document.getElementById('zip-input');
 const weatherDiv = document.getElementById('weather');
+const tickerLabel = document.querySelector('.ticker-label');
+
+function updateTickerLabel() {
+  if (window.matchMedia('(max-width: 600px)').matches) {
+    tickerLabel.textContent = 'PNT:';
+  } else {
+    tickerLabel.textContent = 'PayneBrain News Ticker';
+  }
+}
+window.addEventListener('resize', updateTickerLabel);
+updateTickerLabel();
+
+function getFlyInClass() {
+  const dirs = ['fly-in-left', 'fly-in-right', 'fly-in-top', 'fly-in-bottom'];
+  return dirs[Math.floor(Math.random() * dirs.length)];
+}
 
 const allFeeds = {
   cnn: { name: 'CNN', url: 'https://rss.cnn.com/rss/cnn_topstories.rss' },
@@ -150,6 +166,7 @@ function appendMessage(role, text, attachments = []) {
   div.className = `message ${role}`;
   const bubble = document.createElement('div');
   bubble.className = 'bubble';
+  bubble.classList.add(getFlyInClass());
   const regex = /```([\s\S]*?)```/g;
   let lastIndex = 0;
   let match;
@@ -315,6 +332,7 @@ function showThinking() {
   icon.textContent = '🤖';
   const bubble = document.createElement('div');
   bubble.className = 'bubble';
+  bubble.classList.add(getFlyInClass());
   const img = document.createElement('img');
   img.src = 'https://media.tenor.com/I6kN-6X7nhAAAAAj/loading-buffering.gif';
   img.alt = 'thinking';
