@@ -29,6 +29,7 @@
           <option value="gpt-4o-mini">gpt-4o-mini</option>
           <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
           <option value="gpt-4">gpt-4</option>
+          <option value="gpt-5">gpt-5</option>
         </select>
       </header>
       <div id="messages" class="flex-1 p-4 overflow-y-auto"></div>
@@ -50,6 +51,11 @@
       <h3 class="mb-2 text-base">Settings</h3>
       <form id="settings-form" class="flex flex-col gap-2">
         <div id="rss-options" class="flex flex-col gap-2"></div>
+        <div id="custom-rss" class="flex flex-col gap-2">
+          <input type="text" id="custom-rss-name" class="p-1 bg-gray-700 text-white rounded" placeholder="Feed Name">
+          <input type="text" id="custom-rss-url" class="p-1 bg-gray-700 text-white rounded" placeholder="Feed URL">
+          <button type="button" id="add-rss-btn" class="p-2 bg-blue-600 text-white rounded"><i class="fas fa-plus"></i> Add Feed</button>
+        </div>
         <label class="flex items-center gap-2">Zip Code
           <input type="text" id="zip-input" class="p-1 bg-gray-700 text-white rounded w-24" placeholder="e.g. 10001">
         </label>
