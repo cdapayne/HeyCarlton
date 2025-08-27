@@ -65,7 +65,7 @@ canvas.addEventListener('click', e => {
 });
 
 document.addEventListener('keypress', e => {
-  if (e.key && e.key.length === 1) {
+  if (e.target.tagName !== 'INPUT' && e.key && e.key.length === 1) {
     formLetter(e.key);
   }
 });
@@ -98,14 +98,13 @@ function login(user) {
 }
 
 document.getElementById('loginbtn').addEventListener('click', () => {
-  const u = document.getElementById('username').value;
-  const p = document.getElementById('password').value;
-  if (u === 'admin' && p === 'admin123') {
-    login('admin');
+  const val = document.getElementById('heyInput').value.trim().toLowerCase();
+  if (val === 'hey') {
+    login('user');
   } else {
     Swal.fire({
       icon: 'error',
-      title: 'Invalid credentials',
+      title: 'Please type "Hey"',
       background: '#1f2937',
       color: '#fff'
     });
