@@ -7,6 +7,7 @@ const promptInput = document.getElementById('prompt-input');
 const fileInput = document.getElementById('file-input');
 const messagesDiv = document.getElementById('messages');
 const modelSelect = document.getElementById('model-select');
+const balanceDiv = document.getElementById('balance');
 const settingsBtn = document.getElementById('settings-btn');
 const settingsModal = document.getElementById('settings-modal');
 const settingsForm = document.getElementById('settings-form');
@@ -31,6 +32,18 @@ document.getElementById('top-info').appendChild(queryLimit);
 updateQueryDisplay();
 
 let currentProject = null;
+
+async function updateBalance() {
+  try {
+    const res = await fetch('/api/balance');
+    const data = await res.json();
+    balanceDiv.textContent = `$${(+data.balance).toFixed(2)}`;
+  } catch (e) {
+    balanceDiv.textContent = 'n/a';
+  }
+}
+updateBalance();
+setInterval(updateBalance, 60000);
 
 openCodexBtn.addEventListener('click', () => {
   window.open('codex.html', 'codexWindow');
@@ -67,6 +80,8 @@ newProjectBtn.addEventListener('click', async () => {
 projectList.addEventListener('click', e => {
   if (e.target.tagName === 'LI') {
     currentProject = e.target.dataset.id;
+    document.querySelectorAll('#project-list li').forEach(li => li.classList.remove('selected'));
+    e.target.classList.add('selected');
     loadProjectHistory();
   }
 });
@@ -209,6 +224,7 @@ async function loadProjects() {
     const li = document.createElement('li');
     li.textContent = p.name;
     li.dataset.id = p.id;
+    if (p.id === currentProject) li.classList.add('selected');
     projectList.appendChild(li);
   });
 }
