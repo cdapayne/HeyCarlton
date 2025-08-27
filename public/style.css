@@ -71,11 +71,60 @@ h1, h2, h3, h4, h5, h6 {
   position: fixed;
   top: 0; left: 0; bottom: 0;
   width: 300px; min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
   backdrop-filter: blur(6px);
   background: linear-gradient(180deg, rgba(22,27,34,.95), rgba(22,27,34,.85));
   border-right: 1px solid #30363d;
   box-shadow: 6px 0 24px rgba(0,0,0,.35);
   overflow-y: auto;
+  font-size: 14px;
+}
+
+/* Sidebar buttons */
+#sidebar button{
+  width: 100%;
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  background: #2d333b;
+  border: 1px solid #444c56;
+  border-radius: 6px;
+  color: #c9d1d9;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+
+#sidebar button:hover{
+  background: #444c56;
+  transform: translateY(-2px);
+}
+
+#sidebar h2{
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: #8b949e;
+  border-top: 1px solid #30363d;
+  padding-top: 0.75rem;
+}
+
+#sidebar ul{
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+#sidebar li{
+  padding: 0.4rem 0.6rem;
+  margin-bottom: 0.25rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+#sidebar li:hover{
+  background: #2d333b;
 }
 
 /* Chat area flows to the right via margin (no flex/grid on #app) */

@@ -109,13 +109,20 @@ promptForm.addEventListener('submit', async e => {
     loadProjects();
   }
   appendMessage('user', prompt, Array.from(fileInput.files));
+  const thinkingDiv = showThinking();
   const data = new FormData();
   data.append('prompt', prompt);
   data.append('model', modelSelect.value);
   Array.from(fileInput.files).forEach(f => data.append('files', f));
-  const res = await fetch(`/api/projects/${currentProject}/chat`, { method: 'POST', body: data });
-  const json = await res.json();
-  appendMessage('bot', json.response);
+  try {
+    const res = await fetch(`/api/projects/${currentProject}/chat`, { method: 'POST', body: data });
+    const json = await res.json();
+    messagesDiv.removeChild(thinkingDiv);
+    appendMessage('bot', json.response);
+  } catch (err) {
+    messagesDiv.removeChild(thinkingDiv);
+    console.error(err);
+  }
   promptInput.value = '';
   fileInput.value = '';
   remainingQueries--;
@@ -269,13 +276,39 @@ async function updateWeather() {
     const data = await res.json();
     const current = data.current_condition[0];
     const humidity = parseInt(current.humidity);
-    const iconUrl = current.weatherIconUrl[0].value;
+    const condition = current.weatherDesc[0].value.toLowerCase();
+    let iconClass = 'bi-cloud';
+    if (condition.includes('sun') || condition.includes('clear')) iconClass = 'bi-sun-fill';
+    else if (condition.includes('rain')) iconClass = 'bi-cloud-rain-fill';
+    else if (condition.includes('snow')) iconClass = 'bi-snow';
+    else if (condition.includes('thunder') || condition.includes('storm')) iconClass = 'bi-cloud-lightning-rain-fill';
+    else if (condition.includes('fog') || condition.includes('mist')) iconClass = 'bi-cloud-fog2-fill';
     weatherDiv.style.color = humidity < 55 ? 'limegreen' : '';
-    weatherDiv.innerHTML = `<img src="${iconUrl}" alt="icon" class="w-6 h-6 mr-1">${current.temp_F}\u00B0F ${humidity}%`;
+    weatherDiv.innerHTML = `<i class="bi ${iconClass} mr-1"></i>${current.temp_F}\u00B0F ${humidity}%`;
   } catch (e) {
     console.error(e);
     weatherDiv.textContent = '';
   }
+}
+
+function showThinking() {
+  const div = document.createElement('div');
+  div.className = 'message bot';
+  const icon = document.createElement('div');
+  icon.className = 'icon-bubble';
+  icon.textContent = '🤖';
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  const img = document.createElement('img');
+  img.src = 'https://media.tenor.com/I6kN-6X7nhAAAAAj/loading-buffering.gif';
+  img.alt = 'thinking';
+  img.className = 'w-6 h-6';
+  bubble.appendChild(img);
+  div.appendChild(icon);
+  div.appendChild(bubble);
+  messagesDiv.appendChild(div);
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  return div;
 }
 
 updateWeather();
