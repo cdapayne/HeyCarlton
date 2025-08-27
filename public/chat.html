@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Carlton Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
@@ -33,16 +34,18 @@
         <span id="balance" class="ml-2 text-yellow-400"></span>
       </header>
       <div id="messages" class="flex-1 p-4 overflow-y-auto"></div>
-      <form id="prompt-form" class="flex gap-2 p-2 bg-gray-900 border-t border-gray-700">
-        <label for="file-input" class="p-2 bg-gray-800 text-white rounded cursor-pointer"><i class="fas fa-paperclip"></i></label>
-        <input type="file" id="file-input" multiple class="hidden">
-        <input type="text" id="prompt-input" placeholder="Type your message" class="flex-1 p-2 bg-gray-800 text-white border border-gray-600 rounded">
-        <button type="submit" class="p-2 bg-green-600 text-white rounded"><i class="fas fa-paper-plane"></i> Send</button>
-      </form>
-      <div id="rss-ticker" class="flex items-center bg-gray-800 text-white text-base">
-        <span class="ticker-label px-2 py-1 bg-gray-700">PayneBrain News Ticker</span>
-        <div id="rss-marquee" class="marquee p-2 flex-1"></div>
-        <div id="weather" class="flex items-center px-2"></div>
+      <div id="input-area" class="sticky bottom-0 flex flex-col bg-gray-900 border-t border-gray-700">
+        <form id="prompt-form" class="flex gap-2 p-2 flex-col sm:flex-row">
+          <label for="file-input" class="p-2 bg-gray-800 text-white rounded cursor-pointer"><i class="fas fa-paperclip"></i></label>
+          <input type="file" id="file-input" multiple class="hidden">
+          <input type="text" id="prompt-input" placeholder="Type your message" class="flex-1 p-2 bg-gray-800 text-white border border-gray-600 rounded">
+          <button type="submit" class="p-2 bg-green-600 text-white rounded"><i class="fas fa-paper-plane"></i> Send</button>
+        </form>
+        <div id="rss-ticker" class="flex items-center bg-gray-800 text-white text-base">
+          <span class="ticker-label px-2 py-1 bg-gray-700">PayneBrain News Ticker</span>
+          <div id="rss-marquee" class="marquee p-2 flex-1"></div>
+          <div id="weather" class="flex items-center px-2"></div>
+        </div>
       </div>
     </main>
   </div>
