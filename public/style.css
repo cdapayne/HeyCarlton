@@ -18,7 +18,7 @@ h1, h2, h3, h4, h5, h6 {
   height: 100vh;
   color: #fff;
   text-align: center;
-  background: linear-gradient(135deg, #1e3c72, #2a5298);
+  background: transparent;
 }
 #landing h1 {
   font-size: 16px;
