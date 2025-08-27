@@ -69,9 +69,22 @@ h1, h2, h3, h4, h5, h6 {
   width: auto;
   height: 55px;
 }
-#logo2{
-  width: auto;
-  height: 100px;
+#logo2 {
+    width: 80%; /* or a specific size like 200px */
+    max-width: 400px; /* ensures it doesn't get too large */
+    height: auto; /* maintain the aspect ratio of the logo */
+    
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto; /* centers the logo within its container */
+}
+
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* or whatever height you prefer */
 }
 
 #ticker-logo{
