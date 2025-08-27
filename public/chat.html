@@ -56,6 +56,11 @@
       <h3 class="mb-2 text-base">Settings</h3>
       <form id="settings-form" class="flex flex-col gap-2">
         <div id="rss-options" class="flex flex-col gap-2"></div>
+        <div id="custom-feed" class="flex flex-col gap-2">
+          <input type="text" id="custom-feed-name" class="p-1 bg-gray-700 text-white rounded" placeholder="Feed Name">
+          <input type="text" id="custom-feed-url" class="p-1 bg-gray-700 text-white rounded" placeholder="Feed URL">
+          <button type="button" id="add-feed-btn" class="p-2 bg-blue-600 text-white rounded"><i class="fas fa-plus"></i> Add Feed</button>
+        </div>
         <label class="flex items-center gap-2">Zip Code
           <input type="text" id="zip-input" class="p-1 bg-gray-700 text-white rounded w-24" placeholder="e.g. 10001">
         </label>
