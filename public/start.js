@@ -98,9 +98,8 @@ function login(user) {
 }
 
 document.getElementById('loginbtn').addEventListener('click', () => {
-  const u = document.getElementById('username').value;
-  const p = document.getElementById('password').value;
-  if (u === 'admin' && p === 'admin123') {
+  const u = document.getElementById('heyInput').value;
+  if (u === 'Hey' ) {
     login('admin');
   } else {
     Swal.fire({
