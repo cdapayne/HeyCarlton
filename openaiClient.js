@@ -1,4 +1,10 @@
+const { fetch, ProxyAgent, setGlobalDispatcher } = require('undici');
+
 const apiKey = process.env.OPENAI_API_KEY;
+const proxy = process.env.HTTPS_PROXY || process.env.HTTP_PROXY;
+if (proxy) {
+  setGlobalDispatcher(new ProxyAgent(proxy));
+}
 
 async function chat({ model, messages }) {
   const r = await fetch('https://api.openai.com/v1/chat/completions', {
