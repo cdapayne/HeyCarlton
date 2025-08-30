@@ -43,12 +43,6 @@ const allFeeds = { ...defaultFeeds, ...customFeeds };
 let selectedFeeds = JSON.parse(localStorage.getItem('rssFeeds') || JSON.stringify(Object.keys(defaultFeeds)));
 let userZip = localStorage.getItem('zip') || '';
 
-let remainingQueries = parseInt(localStorage.getItem('remainingQueries') || '0');
-const queryLimit = document.createElement('div');
-queryLimit.id = 'query-limit';
-document.getElementById('top-info').appendChild(queryLimit);
-updateQueryDisplay();
-
 let currentProject = null;
 
 async function updateBalance() {
@@ -132,15 +126,6 @@ promptForm.addEventListener('submit', async e => {
   e.preventDefault();
   const prompt = promptInput.value;
   if (!prompt) return;
-  if (remainingQueries <= 0) {
-    await Swal.fire({
-      icon: 'warning',
-      title: 'Query limit reached',
-      background: '#1f2937',
-      color: '#fff'
-    });
-    return;
-  }
   if (!currentProject) {
     const name = prompt.trim().substring(0, 20) || 'project';
     const resProj = await fetch('/api/projects', {
@@ -168,9 +153,6 @@ promptForm.addEventListener('submit', async e => {
     console.error(err);
   }
   promptInput.value = '';
-  remainingQueries--;
-  localStorage.setItem('remainingQueries', remainingQueries);
-  updateQueryDisplay();
 });
 
 function appendMessage(role, text) {
@@ -276,10 +258,6 @@ async function loadProjectHistory() {
 
 loadProjects();
 updateMarquee();
-
-function updateQueryDisplay() {
-  queryLimit.textContent = `Queries left: ${remainingQueries}`;
-}
 
 function renderSettings() {
   rssOptions.innerHTML = '';

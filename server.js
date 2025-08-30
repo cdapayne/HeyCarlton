@@ -1,25 +1,26 @@
-import express from 'express';
-import cors from 'cors';
-import fs from 'fs';
-import path from 'path';
-import OpenAI from 'openai';
-import Parser from 'rss-parser';
-import 'dotenv/config';
-import { slugify, generateTitle } from './utils.js';
+const express = require('express');
+const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
+const Parser = require('rss-parser');            // keep: used in /api/rss
+const { chat } = require('./openaiClient.js');   // <-- using your REST wrapper
+
+require('dotenv').config();
+const { slugify, generateTitle } = require('./utils.js');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const parser = new Parser();
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const PROJECTS_DIR = path.join(DATA_DIR, 'projects');
 fs.mkdirSync(PROJECTS_DIR, { recursive: true });
 
-const DEFAULT_PROMPT = 'You are Carlton, an AI assistant. Answer the user and end your response with an additional suggestion to take it to the next level.';
+const DEFAULT_PROMPT =
+  'You are Carlton, an AI assistant. Answer the user and end your response with an additional suggestion to take it to the next level.';
 
 // Create project
 app.post('/api/projects', (req, res) => {
@@ -47,6 +48,7 @@ app.get('/api/projects', (req, res) => {
   res.json(projects);
 });
 
+// Update project meta
 app.put('/api/projects/:projectId', (req, res) => {
   const metaPath = path.join(PROJECTS_DIR, req.params.projectId, 'meta.json');
   if (!fs.existsSync(metaPath)) return res.status(404).json({ error: 'not found' });
@@ -66,8 +68,8 @@ app.get('/api/projects/:projectId/chats', (req, res) => {
   const chats = fs.readdirSync(dir)
     .filter(f => f.endsWith('.json') && f !== 'meta.json')
     .map(f => {
-      const chat = JSON.parse(fs.readFileSync(path.join(dir, f)));
-      return { id: f, title: chat.title, date: chat.date };
+      const chatFile = JSON.parse(fs.readFileSync(path.join(dir, f)));
+      return { id: f, title: chatFile.title, date: chatFile.date };
     });
   res.json(chats);
 });
@@ -76,11 +78,11 @@ app.get('/api/projects/:projectId/chats', (req, res) => {
 app.get('/api/projects/:projectId/chats/:chatId', (req, res) => {
   const file = path.join(PROJECTS_DIR, req.params.projectId, req.params.chatId);
   if (!fs.existsSync(file)) return res.status(404).end();
-  const chat = JSON.parse(fs.readFileSync(file));
-  res.json(chat);
+  const chatData = JSON.parse(fs.readFileSync(file));
+  res.json(chatData);
 });
 
-// Send chat
+// Send chat (uses openaiClient.chat)
 app.post('/api/projects/:projectId/chat', async (req, res) => {
   const projectId = req.params.projectId;
   const { prompt, model = 'gpt-3.5-turbo' } = req.body;
@@ -94,30 +96,31 @@ app.post('/api/projects/:projectId/chat', async (req, res) => {
     } catch {}
   }
 
-  let responseText = '';
   try {
-    const sys = { role: 'system', content: projectPrompt };
-    const completion = await openai.chat.completions.create({
+    const responseText = await chat({
       model,
-      messages: [sys, { role: 'user', content: prompt }]
+      messages: [
+        { role: 'system', content: projectPrompt },
+        { role: 'user', content: prompt }
+      ]
     });
-    responseText = completion.choices[0].message.content.trim();
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
 
-  const { title, file } = generateTitle(prompt);
-  const chatData = {
-    title,
-    date: new Date().toISOString(),
-    prompt,
-    response: responseText
-  };
-  const chatPath = path.join(PROJECTS_DIR, projectId, file);
-  fs.writeFileSync(chatPath, JSON.stringify(chatData, null, 2));
-  res.json({ ...chatData, id: file });
+    const { title, file } = generateTitle(prompt);
+    const chatData = {
+      title,
+      date: new Date().toISOString(),
+      prompt,
+      response: responseText
+    };
+    const chatPath = path.join(PROJECTS_DIR, projectId, file);
+    fs.writeFileSync(chatPath, JSON.stringify(chatData, null, 2));
+    res.json({ ...chatData, id: file });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
+// RSS titles
 app.get('/api/rss', async (req, res) => {
   const { url } = req.query;
   if (!url) return res.status(400).json({ error: 'url required' });
@@ -130,7 +133,7 @@ app.get('/api/rss', async (req, res) => {
   }
 });
 
-// Return current OpenAI account balance
+// OpenAI account balance (uses Node 18 global fetch)
 app.get('/api/balance', async (req, res) => {
   try {
     const response = await fetch('https://api.openai.com/v1/dashboard/billing/credit_grants', {
@@ -144,16 +147,16 @@ app.get('/api/balance', async (req, res) => {
   }
 });
 
-// Standalone Codex endpoint using chat completions
+// Standalone Codex-like endpoint (also uses openaiClient.chat)
 app.post('/api/codex', async (req, res) => {
   const { prompt } = req.body;
   if (!prompt) return res.status(400).json({ error: 'prompt required' });
   try {
-    const completion = await openai.chat.completions.create({
+    const response = await chat({
       model: 'gpt-4',
       messages: [{ role: 'user', content: prompt }]
     });
-    res.json({ response: completion.choices[0].message.content.trim() });
+    res.json({ response });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

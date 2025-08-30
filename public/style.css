@@ -5,6 +5,15 @@ body {
   color: #f0f6fc;
   font-size: 16px;
 }
+#bodx {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh; /* Full viewport height */
+  margin: 0; /* Remove default margin */
+}
+
 h1, h2, h3, h4, h5, h6 {
   font-size: 16px;
 }
@@ -67,6 +76,24 @@ h1, h2, h3, h4, h5, h6 {
 }
 #logo{
   width: auto;
+  height: 55px;
+}
+#logo2 {
+    width: 80%; /* or a specific size like 200px */
+    max-width: 400px; /* ensures it doesn't get too large */
+    height: auto; /* maintain the aspect ratio of the logo */
+    
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto; /* centers the logo within its container */
+}
+
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* or whatever height you prefer */
 }
 
 #ticker-logo{
@@ -452,5 +479,30 @@ pre {
   color: #fff;
   border-radius: 4px;
   cursor: pointer;
+}
+
+#landing {
+  text-align: center; /* Center the content */
+}
+
+#logo2 {
+  width: 300px; /* Adjust size as needed */
+  height: auto; /* Maintain aspect ratio */
+}
+
+#login {
+  margin-top: 20px; /* Space between logo and login form */
+}
+
+#login input {
+  display: block;
+  margin: 10px auto; /* Center inputs */
+  padding: 10px;
+}
+
+#login button {
+  display: block;
+  margin: 10px auto; /* Center buttons */
+  padding: 10px;
 }
 #codex-page button:hover { background: #2ea043; }
