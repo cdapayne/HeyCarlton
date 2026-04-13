@@ -45,6 +45,51 @@ let userZip = localStorage.getItem('zip') || '';
 
 let currentProject = null;
 
+async function loadModels() {
+  try {
+    const res = await fetch('/api/models');
+    const data = await res.json();
+    modelSelect.innerHTML = '';
+    if (data.models && data.models.length) {
+      data.models.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m;
+        opt.textContent = m;
+        modelSelect.appendChild(opt);
+      });
+      const saved = localStorage.getItem('selectedModel');
+      if (saved && data.models.includes(saved)) {
+        modelSelect.value = saved;
+      } else if (data.models.includes('gpt-4o-mini')) {
+        modelSelect.value = 'gpt-4o-mini';
+      }
+    } else {
+      const fallback = ['gpt-4o-mini', 'gpt-4o', 'gpt-4', 'gpt-3.5-turbo'];
+      fallback.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m;
+        opt.textContent = m;
+        modelSelect.appendChild(opt);
+      });
+    }
+  } catch (e) {
+    console.error('Failed to load models:', e);
+    const fallback = ['gpt-4o-mini', 'gpt-4o', 'gpt-4', 'gpt-3.5-turbo'];
+    modelSelect.innerHTML = '';
+    fallback.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m;
+      opt.textContent = m;
+      modelSelect.appendChild(opt);
+    });
+    modelSelect.value = 'gpt-4o-mini';
+  }
+}
+modelSelect.addEventListener('change', () => {
+  localStorage.setItem('selectedModel', modelSelect.value);
+});
+loadModels();
+
 async function updateBalance() {
   try {
     const res = await fetch('/api/balance');
@@ -124,8 +169,9 @@ settingsForm.addEventListener('submit', e => {
 
 promptForm.addEventListener('submit', async e => {
   e.preventDefault();
-  const prompt = promptInput.value;
+  const prompt = promptInput.value.trim();
   if (!prompt) return;
+  promptInput.value = '';
   if (!currentProject) {
     const name = prompt.trim().substring(0, 20) || 'project';
     const resProj = await fetch('/api/projects', {
@@ -138,28 +184,52 @@ promptForm.addEventListener('submit', async e => {
     loadProjects();
   }
   appendMessage('user', prompt);
-  const thinkingDiv = showThinking();
+  const { bubble: botBubble, container: botDiv } = appendStreamingMessage();
   try {
-    const res = await fetch(`/api/projects/${currentProject}/chat`, {
+    const res = await fetch(`/api/projects/${currentProject}/chat/stream`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt, model: modelSelect.value })
     });
-    const json = await res.json();
-    messagesDiv.removeChild(thinkingDiv);
-    appendMessage('bot', json.response);
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let fullText = '';
+    let buffer = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith('data: ')) continue;
+        try {
+          const data = JSON.parse(trimmed.slice(6));
+          if (data.content) {
+            fullText += data.content;
+            renderStreamedContent(botBubble, fullText);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+          }
+          if (data.error) {
+            botBubble.textContent = 'Error: ' + data.error;
+          }
+        } catch {}
+      }
+    }
   } catch (err) {
-    messagesDiv.removeChild(thinkingDiv);
+    botBubble.textContent = 'Error: ' + err.message;
     console.error(err);
   }
-  promptInput.value = '';
 });
 
 function appendMessage(role, text) {
   const div = document.createElement('div');
-  div.className = `message ${role}`;
+  div.className = `message ${role} flex gap-3 ${role === 'user' ? 'justify-end' : ''}`;
   const bubble = document.createElement('div');
-  bubble.className = 'bubble';
+  bubble.className = role === 'bot'
+    ? 'bubble max-w-[80%] px-4 py-3 rounded-2xl rounded-tl-sm bg-gradient-to-br from-slate-800/80 to-slate-900/80 border border-cyan-500/15 text-slate-200 shadow-[0_2px_20px_rgba(0,240,255,0.06)] leading-relaxed text-sm'
+    : 'bubble max-w-[80%] px-4 py-3 rounded-2xl rounded-tr-sm bg-gradient-to-br from-blue-600/40 to-indigo-600/40 border border-blue-500/20 text-slate-100 shadow-[0_2px_20px_rgba(59,130,246,0.15)] leading-relaxed text-sm';
   bubble.classList.add(getFlyInClass());
   const regex = /```([\s\S]*?)```/g;
   let lastIndex = 0;
@@ -188,7 +258,7 @@ function appendMessage(role, text) {
   }
   if (role === 'bot') {
     const icon = document.createElement('div');
-    icon.className = 'icon-bubble';
+    icon.className = 'flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 flex items-center justify-center text-sm shadow-[0_0_10px_rgba(0,240,255,0.15)]';
     icon.textContent = '🤖';
     div.appendChild(icon);
     div.appendChild(bubble);
@@ -197,6 +267,58 @@ function appendMessage(role, text) {
   }
   messagesDiv.appendChild(div);
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+function appendStreamingMessage() {
+  const div = document.createElement('div');
+  div.className = 'message bot flex gap-3';
+  const icon = document.createElement('div');
+  icon.className = 'flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 flex items-center justify-center text-sm shadow-[0_0_10px_rgba(0,240,255,0.15)]';
+  icon.textContent = '\ud83e\udd16';
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble max-w-[80%] px-4 py-3 rounded-2xl rounded-tl-sm bg-gradient-to-br from-slate-800/80 to-slate-900/80 border border-cyan-500/15 text-slate-200 shadow-[0_2px_20px_rgba(0,240,255,0.06)] leading-relaxed text-sm';
+  bubble.classList.add(getFlyInClass());
+  const cursor = document.createElement('span');
+  cursor.className = 'inline-block w-2 h-4 bg-cyan-400 ml-0.5 animate-pulse';
+  bubble.appendChild(cursor);
+  div.appendChild(icon);
+  div.appendChild(bubble);
+  messagesDiv.appendChild(div);
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  return { bubble, container: div };
+}
+
+function renderStreamedContent(bubble, text) {
+  bubble.innerHTML = '';
+  const regex = /```([\s\S]*?)```/g;
+  let lastIndex = 0;
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    const before = text.slice(lastIndex, match.index).trim();
+    if (before) {
+      const p = document.createElement('p');
+      p.textContent = before;
+      bubble.appendChild(p);
+    }
+    const codeText = match[1];
+    const pre = document.createElement('pre');
+    const code = document.createElement('code');
+    code.textContent = codeText.trim();
+    pre.appendChild(code);
+    bubble.appendChild(pre);
+    hljs.highlightElement(code);
+    lastIndex = regex.lastIndex;
+  }
+  const after = text.slice(lastIndex).trim();
+  if (after) {
+    const p = document.createElement('p');
+    p.textContent = after;
+    bubble.appendChild(p);
+  }
+  // Add blinking cursor at the end
+  const cursor = document.createElement('span');
+  cursor.className = 'inline-block w-2 h-4 bg-cyan-400 ml-0.5 animate-pulse';
+  bubble.appendChild(cursor);
 }
 
 async function loadProjects() {
@@ -239,7 +361,11 @@ async function loadProjects() {
       li.appendChild(dateSpan);
     }
     li.dataset.id = p.id;
-    if (p.id === currentProject) li.classList.add('selected');
+    li.className = 'flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-sm text-slate-300 hover:bg-cyan-500/10 hover:text-cyan-300 transition-all duration-200';
+    if (p.id === currentProject) {
+      li.classList.add('selected');
+      li.className += ' !bg-cyan-500/20 !text-cyan-300 border border-cyan-500/30';
+    }
     projectList.appendChild(li);
   });
 }
@@ -320,18 +446,17 @@ async function updateWeather() {
 
 function showThinking() {
   const div = document.createElement('div');
-  div.className = 'message bot';
+  div.className = 'message bot flex gap-3';
   const icon = document.createElement('div');
-  icon.className = 'icon-bubble';
-  icon.textContent = '🤖';
+  icon.className = 'flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 flex items-center justify-center text-sm shadow-[0_0_10px_rgba(0,240,255,0.15)]';
+  icon.textContent = '\ud83e\udd16';
   const bubble = document.createElement('div');
-  bubble.className = 'bubble';
+  bubble.className = 'bubble max-w-[80%] px-4 py-3 rounded-2xl rounded-tl-sm bg-gradient-to-br from-slate-800/80 to-slate-900/80 border border-cyan-500/15 text-slate-200 shadow-[0_2px_20px_rgba(0,240,255,0.06)]';
   bubble.classList.add(getFlyInClass());
-  const img = document.createElement('img');
-  img.src = 'https://media.tenor.com/I6kN-6X7nhAAAAAj/loading-buffering.gif';
-  img.alt = 'thinking';
-  img.className = 'w-6 h-6';
-  bubble.appendChild(img);
+  const dots = document.createElement('div');
+  dots.className = 'flex gap-1.5 items-center py-1';
+  dots.innerHTML = '<span class="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style="animation-delay:0ms"></span><span class="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style="animation-delay:150ms"></span><span class="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style="animation-delay:300ms"></span>';
+  bubble.appendChild(dots);
   div.appendChild(icon);
   div.appendChild(bubble);
   messagesDiv.appendChild(div);
