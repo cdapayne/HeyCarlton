@@ -20,4 +20,17 @@ async function chat({ model, messages }) {
   return data.choices?.[0]?.message?.content?.trim() ?? '';
 }
 
-module.exports = { chat };
+async function chatStream({ model, messages }) {
+  const r = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ model, messages, stream: true })
+  });
+  if (!r.ok) throw new Error(`OpenAI error ${r.status}: ${await r.text()}`);
+  return r.body;
+}
+
+module.exports = { chat, chatStream };

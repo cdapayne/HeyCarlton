@@ -1,11 +1,12 @@
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 const Parser = require('rss-parser');            // keep: used in /api/rss
-const { chat } = require('./openaiClient.js');   // <-- using your REST wrapper
+const { chat, chatStream } = require('./openaiClient.js');   // <-- using your REST wrapper
 
-require('dotenv').config();
 const { slugify, generateTitle } = require('./utils.js');
 
 const app = express();
@@ -85,7 +86,7 @@ app.get('/api/projects/:projectId/chats/:chatId', (req, res) => {
 // Send chat (uses openaiClient.chat)
 app.post('/api/projects/:projectId/chat', async (req, res) => {
   const projectId = req.params.projectId;
-  const { prompt, model = 'gpt-3.5-turbo' } = req.body;
+  const { prompt, model = 'gpt-4o-mini' } = req.body;
   if (!prompt) return res.status(400).json({ error: 'prompt required' });
 
   const metaPath = path.join(PROJECTS_DIR, projectId, 'meta.json');
@@ -120,6 +121,75 @@ app.post('/api/projects/:projectId/chat', async (req, res) => {
   }
 });
 
+// Streaming chat endpoint (SSE)
+app.post('/api/projects/:projectId/chat/stream', async (req, res) => {
+  const projectId = req.params.projectId;
+  const { prompt, model = 'gpt-4o-mini' } = req.body;
+  if (!prompt) return res.status(400).json({ error: 'prompt required' });
+
+  const metaPath = path.join(PROJECTS_DIR, projectId, 'meta.json');
+  let projectPrompt = DEFAULT_PROMPT;
+  if (fs.existsSync(metaPath)) {
+    try {
+      projectPrompt = JSON.parse(fs.readFileSync(metaPath)).prompt || projectPrompt;
+    } catch {}
+  }
+
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive'
+  });
+
+  let fullResponse = '';
+  try {
+    const stream = await chatStream({
+      model,
+      messages: [
+        { role: 'system', content: projectPrompt },
+        { role: 'user', content: prompt }
+      ]
+    });
+
+    let buffer = '';
+    for await (const chunk of stream) {
+      buffer += new TextDecoder().decode(chunk);
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith('data: ')) continue;
+        const data = trimmed.slice(6);
+        if (data === '[DONE]') continue;
+        try {
+          const parsed = JSON.parse(data);
+          const content = parsed.choices?.[0]?.delta?.content;
+          if (content) {
+            fullResponse += content;
+            res.write(`data: ${JSON.stringify({ content })}\n\n`);
+          }
+        } catch {}
+      }
+    }
+
+    // Save the completed chat
+    const { title, file } = generateTitle(prompt);
+    const chatData = {
+      title,
+      date: new Date().toISOString(),
+      prompt,
+      response: fullResponse
+    };
+    const chatPath = path.join(PROJECTS_DIR, projectId, file);
+    fs.writeFileSync(chatPath, JSON.stringify(chatData, null, 2));
+    res.write(`data: ${JSON.stringify({ done: true, id: file })}\n\n`);
+    res.end();
+  } catch (err) {
+    res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
+    res.end();
+  }
+});
+
 // RSS titles
 app.get('/api/rss', async (req, res) => {
   const { url } = req.query;
@@ -142,6 +212,23 @@ app.get('/api/balance', async (req, res) => {
     const data = await response.json();
     const balance = data.total_available ?? 0;
     res.json({ balance });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// List available OpenAI chat models
+app.get('/api/models', async (req, res) => {
+  try {
+    const response = await fetch('https://api.openai.com/v1/models', {
+      headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}` }
+    });
+    const data = await response.json();
+    const chatModels = (data.data || [])
+      .filter(m => /^(gpt-|o[1-9]|chatgpt-)/.test(m.id))
+      .map(m => m.id)
+      .sort();
+    res.json({ models: chatModels });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
